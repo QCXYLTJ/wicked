@@ -476,7 +476,10 @@ game.import('extension', function () {
                 };
             }
         },
-        content() { },
+        content() {
+            lib.connectCardPack.add('缺德扩展');
+            lib.connectCharacterPack.add('缺德扩展');
+        },
         precontent() {
             get.vcardInfo = function (card) { }; //卡牌storage里面存了DOM元素会循环引用导致不能JSON.stringify
             window.sgn = function (bool) {
@@ -1051,6 +1054,14 @@ game.import('extension', function () {
                     sex: 'female',
                     skills: ['QD_bolan'],
                 },
+                QD_sunhao: {
+                    sex: 'male',
+                    skills: ['QD_canshi', 'QD_chouhai'],
+                },
+                QD_zhangzhi: {
+                    sex: 'male',
+                    skills: ['QD_bixin', 'QD_feibai'],
+                },
             };
             for (const i in character) {
                 const info = character[i];
@@ -1065,6 +1076,14 @@ game.import('extension', function () {
                 info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
                 info.dieAudios = [`ext:缺德扩展/die/${i}.mp3`];
             }
+            game.import('character', function (lib, game, ui, get, ai, _status) {
+                const QQQ = {
+                    name: '缺德扩展',
+                    connect: true,
+                    character: character,
+                };
+                return QQQ;
+            });//联机
             Object.assign(lib.character, character);
             lib.characterPack.缺德扩展 = character;
             lib.translate.缺德扩展_character_config = `缺德扩展`;
@@ -1556,7 +1575,7 @@ game.import('extension', function () {
                     },
                     forced: true,
                     filter(event, player) {
-                        return event.type != 'use' && event.cards && event.cards[0];
+                        return event.type != 'use' && event.cards?.length;
                     },
                     async content(event, trigger, player) {
                         for (const i of trigger.cards) {
@@ -1748,7 +1767,7 @@ game.import('extension', function () {
                             const player = _status.event.player;
                             const name = button.link[2],
                                 color = name == 'tao' ? 'red' : 'black';
-                            return number0(player.getUseValue(button.link, null, true)) / 2 + 10;
+                            return number0(player.getUseValue({ name: button.link[2] }, null, true)) / 2 + 10;
                         },
                         backup(links, player) {
                             var name = links[0][2],
@@ -1843,9 +1862,6 @@ game.import('extension', function () {
                         player: 'phaseZhunbeiBegin',
                     },
                     forced: true,
-                    limited: true,
-                    skillAnimation: true,
-                    animationColor: 'metal',
                     async content(event, trigger, player) {
                         const {
                             result: { targets },
@@ -1855,12 +1871,6 @@ game.import('extension', function () {
                             targets[0].addSkill('前盟');
                         }
                     },
-                    mark: true,
-                    intro: {
-                        content: 'limited',
-                    },
-                    init: (player, skill) => (player.storage[skill] = false),
-                    markimage: 'extension/OLUI/image/player/marks/xiandingji.png',
                 },
                 恂恂: {
                     trigger: {
@@ -2673,7 +2683,7 @@ game.import('extension', function () {
                         3: {
                             audio: 'xinfu_xionghuo',
                             trigger: {
-                                global: 'dying',
+                                global: ['dyingBefore'],
                             },
                             forced: true,
                             async content(event, trigger, player) {
@@ -2737,9 +2747,10 @@ game.import('extension', function () {
                             }
                             while (true) {
                                 const { result } = await player.chooseToUse().set('type', 'phase');
-                                if (!result.bool) {
+                                if (result?.bool) { }
+                                else {
                                     break;
-                                }
+                                }//QQQ
                             }
                         }
                     },
@@ -2952,6 +2963,7 @@ game.import('extension', function () {
                     filter(event, player) {
                         return ['juedou', 'sha'].includes(event.card.name);
                     },
+                    forced: true,
                     async content(event, trigger, player) {
                         player.draw();
                     },
@@ -3714,7 +3726,7 @@ game.import('extension', function () {
                             for (const i of moved[1]) {
                                 ui.cardPile.appendChild(i);
                             }
-                            game.log(`${moved[0].length}上${moved[1].length}下`);
+                            game.log(`${get.translation(moved[0])}上${get.translation(moved[1])}下`);
                         }
                     },
                 },
@@ -3762,7 +3774,7 @@ game.import('extension', function () {
                             for (const i of moved[1]) {
                                 ui.cardPile.appendChild(i);
                             }
-                            game.log(`${moved[0].length}上${moved[1].length}下`);
+                            game.log(`${get.translation(moved[0])}上${get.translation(moved[1])}下`);
                         }
                     },
                 },
@@ -3915,7 +3927,8 @@ game.import('extension', function () {
                         }
                         const {
                             result: { targets },
-                        } = await player.chooseTarget(`对一名角色造成${num}点雷电伤害`, lib.filter.notMe).set('ai', (t) => -get.attitude(player, t));
+                        } = await player.chooseTarget(`对一名角色造成${num}点雷电伤害`, lib.filter.notMe)
+                            .set('ai', (t) => sgn(t.isEnemiesOf(player)));
                         if (targets?.length) {
                             targets[0].damage(num, 'thunder');
                         }
@@ -3929,7 +3942,7 @@ game.import('extension', function () {
                             },
                             forced: true,
                             filter(event, player) {
-                                return event.player != _status.currentPhase;
+                                return event.player != _status.currentPhase && !event.getParent('鬼道', true);
                             },
                             async content(event, trigger, player) {
                                 player.judge(function (card) {
@@ -3947,35 +3960,26 @@ game.import('extension', function () {
                 },
                 鬼道: {
                     trigger: {
-                        global: 'judge',
-                    },
-                    filter(event, player) {
-                        return player.countCards('hes') > 0;
+                        global: ['judge'],
                     },
                     forced: true,
                     async content(event, trigger, player) {
-                        const { result } = await player.chooseCard(get.translation(trigger.player) + '的' + (trigger.judgestr || '') + `判定为${get.translation(trigger.player.judging[0])},` + get.prompt('xinguidao'), 'hes', true).set('ai', function (card) {
-                            var result = trigger.judge(card) - trigger.judge(trigger.player.judging[0]);
-                            var attitude = get.attitude(player, trigger.player);
-                            if (attitude == 0 || result == 0) {
-                                return 0;
-                            }
-                            if (card.suit == 'spade') {
-                                result += 4;
-                            }
-                            if (card.suit == 'club') {
-                                result += 3;
-                            }
-                            if (attitude > 0) {
+                        player.draw('nodelay');
+                        const { result } = await player.chooseCard(get.translation(trigger.player) + '的' + (trigger.judgestr || '') + `判定为${get.translation(trigger.player.judging[0])},` + get.prompt('xinguidao'), 'hes')
+                            .set('ai', function (card) {
+                                let result = (trigger.judge(card) - trigger.judge(trigger.player.judging[0])) * sgn(get.attitude(player, trigger.player));
+                                if (card.suit == 'spade') {
+                                    result += 4;
+                                }
+                                if (card.suit == 'club') {
+                                    result += 3;
+                                }
+                                result += 1;
                                 return result;
-                            } else {
-                                return -result;
-                            }
-                        });
+                            });
                         if (result.cards && result.cards[0]) {
                             player.respond(result.cards, 'highlight', 'xinguidao', 'noOrdering');
                             player.gain(trigger.player.judging[0]);
-                            player.draw('nodelay');
                             trigger.player.judging[0] = result.cards[0];
                             trigger.orderingCards.push(result.cards[0]);
                             game.log(trigger.player, '的判定牌改为', result.cards[0]);
@@ -6261,18 +6265,19 @@ game.import('extension', function () {
                         player.storage.QD_jizhi = [];
                     },
                     hiddenCard(player, name) {
-                        if (lib.card[name].type != 'trick' || player.storage.QD_jizhi.includes(name)) return false;
-                        const cards = player.getCards('he', (q) => get.type(q) != 'trick');
-                        const suits = {};
-                        for (const card of cards) {
-                            if (!suits[card.suit]) {
-                                suits[card.suit] = 0;
+                        if (lib.card[name]?.type == 'trick' && !player.storage.QD_jizhi.includes(name)) {
+                            const cards = player.getCards('he', (q) => get.type(q) != 'trick');
+                            const suits = {};
+                            for (const card of cards) {
+                                if (!suits[card.suit]) {
+                                    suits[card.suit] = 0;
+                                }
+                                suits[card.suit]++;
                             }
-                            suits[card.suit]++;
-                        }
-                        for (const i in suits) {
-                            if (suits[i] > 1) {
-                                return true;
+                            for (const i in suits) {
+                                if (suits[i] > 1) {
+                                    return true;
+                                }
                             }
                         }
                     },
@@ -7170,7 +7175,8 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————陆逊
                 //謙遜
-                // 当一张锦囊牌被使用时,你可以将任意名角色至多X张牌当作<谦逊>牌置于你的武将牌上.每回合结束时,你可以选择获得任意张<谦逊>牌(X为你<谦逊>牌数且至少为一)
+                // 当一张锦囊牌被使用时,你可以将任意名角色至多X张牌当作<谦逊>牌置于你的武将牌上(X为你<谦逊>牌数且至少为一)
+                // 每回合结束时,你选择获得一半(向下取整)的<谦逊>牌
                 QD_qianxun: {
                     trigger: {
                         global: ['useCardEnd'],
@@ -7213,13 +7219,15 @@ game.import('extension', function () {
                             },
                             forced: true,
                             filter(event, player) {
-                                return player.getExpansions('QD_qianxun').length;
+                                return player.getExpansions('QD_qianxun').length > 1;
                             },
                             async content(event, trigger, player) {
                                 const cards = player.getExpansions('QD_qianxun');
+                                const num = Math.floor(cards.length / 2);
                                 const {
                                     result: { links },
-                                } = await player.chooseButton([`获得任意张<谦逊>牌`, cards], [1, cards.length]).set('ai', (button) => get.value(button.link) - 7);
+                                } = await player.chooseButton([`选择获得一半(向下取整)的<谦逊>牌`, cards], num, true)
+                                    .set('ai', (button) => get.value(button.link) - 7);
                                 if (links && links[0]) {
                                     player.gain(links, 'gain2');
                                 }
@@ -7244,7 +7252,7 @@ game.import('extension', function () {
                         }).length;
                         let numx = Math.max(player.getExpansions('QD_qianxun').length, 1);
                         while (num-- > 0) {
-                            player.draw(numx);
+                            await player.draw(numx);
                         }
                     },
                     ai: {
@@ -7276,7 +7284,7 @@ game.import('extension', function () {
                                         result: { targets },
                                     } = await player.chooseTarget('分配火焰伤害', (card, player, target) => target != player).set('ai', (t) => -get.attitude(player, t));
                                     if (targets && targets[0]) {
-                                        targets[0].damage('fire');
+                                        await targets[0].damage('fire');
                                     } else {
                                         break;
                                     }
@@ -7297,7 +7305,7 @@ game.import('extension', function () {
                         return game.qcard(player, 'basic').filter((q) => !player.storage.QD_huomo.includes(q[2])).length && _status.currentPhase?.countCards('he');
                     },
                     hiddenCard(player, name) {
-                        return lib.card[name].type == 'basic' && _status.currentPhase?.countCards('he') && !player.storage.QD_huomo.includes(name);
+                        return lib.card[name]?.type == 'basic' && _status.currentPhase?.countCards('he') && !player.storage.QD_huomo.includes(name);
                     },
                     chooseButton: {
                         dialog(event, player) {
@@ -7412,7 +7420,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹植
                 //落英
-                //当一名角色<不因重铸或使用而>失去♣️牌时,你获得之.你的出牌阶段外,删除此技能括号内内容
+                //当一名角色<不因重铸或使用而>失去♣️牌时,你获得之然后翻回正面.你的出牌阶段外,删除此技能括号内内容
                 QD_luoying: {
                     trigger: {
                         global: ['loseAfter'],
@@ -7429,6 +7437,7 @@ game.import('extension', function () {
                             trigger.cards.filter((q) => q.suit == 'club'),
                             'gain2'
                         );
+                        player.classList.remove('turnedover');
                     },
                 },
                 //酒诗
@@ -7590,7 +7599,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————荀攸
                 //你可将所有黑色手牌当作任意一张普通锦囊牌使用,并摸一张牌
                 QD_qice: {
-                    hiddenCard: (player, name) => lib.card[name].type == 'trick' && player.countCards('h', { color: 'black' }),
+                    hiddenCard: (player, name) => lib.card[name]?.type == 'trick' && player.countCards('h', { color: 'black' }),
                     enable: 'chooseToUse',
                     filter(event, player) {
                         return game.qcard(player, 'trick').length && player.hasCard({ color: 'black' }, 'h');
@@ -7885,13 +7894,123 @@ game.import('extension', function () {
                 // 锁定技,你造成的伤害增加(体力值-游戏轮数)点
                 //——————————————————————————————————————————————————————————————————————————————————————————————————孙皓
                 // 残蚀
-                // 已受伤角色回合开始时,你摸全场已受伤角色数的牌.其他未受伤角色使用或打出牌时,须弃置一张牌
-
+                // 已受伤角色回合开始时,你摸全场已受伤角色数的牌.其他未受伤角色失去牌时,随机弃置一张牌
+                QD_canshi: {
+                    trigger: {
+                        global: ['phaseBefore'],
+                    },
+                    forced: true,
+                    filter(event, player) {
+                        return event.player.hp < event.player.maxHp;
+                    },
+                    async content(event, trigger, player) {
+                        const num = game.players.filter((q) => q.hp < q.maxHp).length;
+                        player.draw(num);
+                    },
+                    group: ['QD_canshi_1'],
+                    subSkill: {
+                        1: {
+                            trigger: {
+                                global: ['loseEnd'],
+                            },
+                            forced: true,
+                            filter(event, player) {
+                                return event.player.hp >= event.player.maxHp && event.player != player && event.player.countCards('he') && !event.getParent('QD_canshi_1', true);
+                            },
+                            async content(event, trigger, player) {
+                                trigger.player.randomDiscard('he');
+                            },
+                        },
+                    },
+                },
                 // 仇海
-                // 当你<受到伤害/造成伤害>时,若对方手牌数小于你,此伤害<-1/+1>
-                //——————————————————————————————————————————————————————————————————————————————————————————————————
-                // 神愤
-                // 弃置6标记,对所有其他角色造成一点伤害,令这些角色翻面并弃置四张手牌
+                // 当你<受到伤害/造成伤害>时,若对方手牌数不大于你,此伤害<-1/+1>
+                QD_chouhai: {
+                    trigger: {
+                        player: ['damageBefore'],
+                        source: ['damageBefore'],
+                    },
+                    forced: true,
+                    filter(event, player) {
+                        if (!event.source) return true;
+                        const num1 = event.source.countCards('h');
+                        const num2 = event.player.countCards('h');
+                        if (event.player == player) {
+                            return num2 >= num1;
+                        }
+                        return num1 >= num2;
+                    },
+                    async content(event, trigger, player) {
+                        if (trigger.player == player) {
+                            trigger.num--;
+                        }
+                        else {
+                            trigger.num++;
+                        }
+                    },
+                },
+                //——————————————————————————————————————————————————————————————————————————————————————————————————张芝
+                // 笔心
+                // 任意角色的准备阶段/结束阶段,你可以声明一种牌的类型,并选择一种基本牌.你摸3张牌,然后将当前回合角色所有此类型的牌当此基本牌使用
+                QD_bixin: {
+                    trigger: {
+                        global: ['phaseZhunbeiBegin', 'phaseJieshuBegin'],
+                    },
+                    forced: true,
+                    filter(event, player) {
+                        return _status.currentPhase;
+                    },
+                    async content(event, trigger, player) {
+                        const cards = _status.currentPhase.getCards('he');
+                        const {
+                            result: { links },
+                        } = await player.chooseButton(['请选择类型', [lib.type.map((i) => [i, get.translation(i)]), 'tdnodes']])
+                            .set('ai', (b) => {
+                                if (_status.currentPhase.isFriendsOf(player)) {
+                                    return 5 - cards.filter((q) => get.type(q) == b.link).length;
+                                }
+                                return cards.filter((q) => get.type(q) == b.link).length;
+                            });
+                        if (links && links[0]) {
+                            const {
+                                result: { links: links1 },
+                            } = await player.chooseButton(['选择一种基本牌', [game.qcard(player, 'basic', true, false), 'vcard']])
+                                .set('ai', (button) => {
+                                    const num = player.getUseValue({
+                                        name: button.link[2],
+                                        nature: button.link[3]
+                                    }, null, true);
+                                    return number0(num) + 10;
+                                });
+                            if (links1 && links1[0]) {
+                                player.draw(3);
+                                const cards1 = cards.filter((q) => get.type(q) == links[0]);
+                                player.chooseUseTarget({ name: links1[0][2], nature: links1[0][3], cards: cards1 }, cards1)
+                                    .set('nodistance', true).set('addCount', false);
+                            }
+                        }
+                    },
+                },
+                // 飞白
+                // 当你因执行非黑/红色牌的效果而造成伤害/回复时,此数值翻倍
+                QD_feibai: {
+                    trigger: {
+                        source: ['damageBefore'],
+                        player: ['recoverBefore'],
+                    },
+                    forced: true,
+                    filter(event, player, name) {
+                        if (event.card) {
+                            if (name == 'damage') {
+                                return get.color(event.card) != 'black';
+                            }
+                            return get.color(event.card) != 'red';
+                        }
+                    },
+                    async content(event, trigger, player) {
+                        trigger.num = numberq1(trigger.num) * 2;
+                    },
+                },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————姜维
                 // 挑衅
                 // 回合限一次,你可以令一名其他角色对其自己使用一张【杀】,否则你获得其一张牌
@@ -7973,6 +8092,18 @@ game.import('extension', function () {
             } //QQQ
             Object.assign(lib.skill, skill);
             const translate = {
+                //——————————————————————————————————————————————————————————————————————————————————————————————————张芝
+                QD_zhangzhi: '张芝',
+                QD_bixin: '笔心',
+                QD_bixin_info: '任意角色的准备阶段/结束阶段,你可以声明一种牌的类型,并选择一种基本牌.你摸3张牌,然后将当前回合角色所有此类型的牌当此基本牌使用',
+                QD_feibai: '飞白',
+                QD_feibai_info: '当你因执行非黑/红色牌的效果而造成伤害/回复时,此数值翻倍',
+                //——————————————————————————————————————————————————————————————————————————————————————————————————孙皓
+                QD_sunhao: '孙皓',
+                QD_canshi: '残蚀',
+                QD_canshi_info: '已受伤角色回合开始时,你摸全场已受伤角色数的牌.其他未受伤角色失去牌时,随机弃置一张牌',
+                QD_chouhai: '仇海',
+                QD_chouhai_info: '当你<受到伤害/造成伤害>时,若对方手牌数不大于你,此伤害<-1/+1>',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————钟琰
                 QD_zhongyan: '钟琰',
                 QD_bolan: '博览',
@@ -8008,7 +8139,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹植
                 QD_caozhi: '曹植',
                 QD_luoying: '落英',
-                QD_luoying_info: '<span class="Qmenu">锁定技,</span>任意角色不因<重铸/使用>而失去♣️牌时,你获得之.你的出牌阶段外,删除此技能括号内内容',
+                QD_luoying_info: '<span class="Qmenu">锁定技,</span>任意角色不因<重铸/使用>而失去♣️牌时,你获得之然后翻回正面.你的出牌阶段外,删除此技能括号内内容',
                 QD_jiushi: '酒诗',
                 QD_jiushi_info: '你可以将一名正面朝上角色的武将牌翻面,视为使用一张酒',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹真
@@ -8195,7 +8326,7 @@ game.import('extension', function () {
                 QD_leiji: '雷击',
                 QD_leiji_info: '<span class="Qmenu">锁定技,</span>任意角色回合外使用或打出牌时,你进行一次判定<br>任意角色判定结束后,若结果为:♠️️,你分配2点雷电伤害;♣️️,你回复1点体力并分配1点雷电伤害',
                 鬼道: '鬼道',
-                鬼道_info: '任意角色的判定牌生效前,你可以打出一张牌替换之,然后你摸一张牌',
+                鬼道_info: '任意角色的判定牌生效前,你摸一张牌,可以打出一张牌替换之',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————周瑜
                 QD_周瑜: '周瑜',
                 反间: '反间',
@@ -8541,11 +8672,13 @@ game.import('extension', function () {
                         info.image = `ext:缺德扩展/image/${i}.jpg`;
                     }
                 }
-                lib.inpile.add(i);
-                if (info.mode && !info.mode.includes(lib.config.mode)) continue;
-                let num = Math.ceil(Math.random() * 5);
-                while (num-- > 0) {
-                    lib.card.list.push([lib.suits.randomGet(), lib.number.randomGet(), i]);
+                if (lib.config.extension_缺德扩展_缺德卡牌) {
+                    lib.inpile.add(i);
+                    if (info.mode && !info.mode.includes(lib.config.mode)) continue;
+                    let num = Math.ceil(Math.random() * 5);
+                    while (num-- > 0) {
+                        lib.card.list.push([lib.suits.randomGet(), lib.number.randomGet(), i]);
+                    }
                 }
             }
             Object.assign(lib.card, card);
@@ -8553,9 +8686,6 @@ game.import('extension', function () {
             lib.translate.缺德扩展_card_config = `缺德扩展`;
             lib.config.all.cards.add('缺德扩展');
             lib.config.cards.add('缺德扩展');
-            lib.arenaReady.push(function () {
-                lib.connectCardPack.add('缺德扩展');
-            }); //扩展卡牌联机
             game.saveConfig(`extension_缺德扩展_cards_enable`, true); //扩展卡牌全部打开
             game.saveConfig('cards', lib.config.cards);
             game.saveConfig('defaultcards', lib.config.cards);
@@ -8564,6 +8694,11 @@ game.import('extension', function () {
             群聊: {
                 name: '<a href="https://qm.qq.com/q/SsTlU9gc24"><span class="Qmenu">【缺德扩展】群聊: 771901025</span></a>',
                 clear: true,
+            },
+            缺德卡牌: {
+                name: '<span class="Qmenu">缺德卡牌</span>',
+                intro: '开启后,将缺德卡牌加入牌堆',
+                init: true,
             },
         },
         package: {
