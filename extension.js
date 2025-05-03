@@ -643,43 +643,253 @@ game.import('extension', function () {
                     return card.selectTarget != 1;
                 }
             }; //多目标牌检测
-            lib.element.player.dyingResult = async function () {
-                game.log(this, '濒死');
-                _status.dying.unshift(this);
-                for (const i of game.players) {
-                    const { result } = await i.chooseToUse({
-                        filterCard: (card, player, event) => lib.filter.cardSavable(card, player, _status.dying[0]),
-                        filterTarget(card, player, target) {
-                            if (target != _status.dying[0]) return false;
-                            if (!card) return false;
-                            var info = get.info(card);
-                            if (!info.singleCard || ui.selected.targets.length == 0) {
-                                var mod = game.checkMod(card, player, target, 'unchanged', 'playerEnabled', player);
-                                if (mod == false) return false;
-                                var mod = game.checkMod(card, player, target, 'unchanged', 'targetEnabled', target);
-                                if (mod != 'unchanged') return mod;
-                            }
-                            return true;
-                        },
-                        prompt: get.translation(_status.dying[0]) + '濒死,是否帮助？',
-                        ai1: () => 1,
-                        ai2() {
-                            return get.attitude(_status.dying[0], i);
-                        }, //QQQ
-                        type: 'dying',
-                        targetRequired: true,
-                        dying: _status.dying[0],
-                    });
-                    if (result?.bool) {
-                        _status.dying.remove(this);
-                        break;
+            //—————————————————————————————————————————————————————————————————————————————解构魔改本体函数
+            const mogai = function () {
+                lib.element.player.dyingResult = async function () {
+                    game.log(this, '濒死');
+                    _status.dying.unshift(this);
+                    for (const i of game.players) {
+                        const { result } = await i.chooseToUse({
+                            filterCard: (card, player, event) => lib.filter.cardSavable(card, player, _status.dying[0]),
+                            filterTarget(card, player, target) {
+                                if (target != _status.dying[0]) return false;
+                                if (!card) return false;
+                                var info = get.info(card);
+                                if (!info.singleCard || ui.selected.targets.length == 0) {
+                                    var mod = game.checkMod(card, player, target, 'unchanged', 'playerEnabled', player);
+                                    if (mod == false) return false;
+                                    var mod = game.checkMod(card, player, target, 'unchanged', 'targetEnabled', target);
+                                    if (mod != 'unchanged') return mod;
+                                }
+                                return true;
+                            },
+                            prompt: get.translation(_status.dying[0]) + '濒死,是否帮助？',
+                            ai1: () => 1,
+                            ai2() {
+                                return get.attitude(_status.dying[0], i);
+                            }, //QQQ
+                            type: 'dying',
+                            targetRequired: true,
+                            dying: _status.dying[0],
+                        });
+                        if (result?.bool) {
+                            _status.dying.remove(this);
+                            break;
+                        }
                     }
-                }
-                if (_status.dying.includes(this)) {
-                    await this.die();
-                }
-                return this;
-            }; //濒死结算
+                    if (_status.dying.includes(this)) {
+                        await this.die();
+                    }
+                    return this;
+                }; //濒死结算
+                lib.element.player.yinni = function () {
+                    const name = this.name;
+                    this.storage.rawHp = this.hp;
+                    this.storage.rawMaxHp = this.maxHp;
+                    if (name && lib.character[name]) {
+                        const skill = lib.character[name][3];
+                        if (!this.hiddenSkills) {
+                            this.hiddenSkills = [];
+                        }
+                        if (skill[0]) {
+                            for (const i of skill) {
+                                this.removeSkill(i);
+                            }
+                            this.hiddenSkills.addArray(skill);
+                        }
+                    }
+                    this.classList.add('unseen');
+                    this.name = 'unknown';
+                    this.sex = 'male';
+                    this.storage.nohp = true;
+                    this.node.hp.hide();
+                    this.addSkill('g_hidden_ai');
+                    this.hp = 1;
+                    this.maxHp = 1;
+                    this.update();
+                }; //隐匿函数
+                lib.element.player.qreinit = function (name) {
+                    const info = lib.character[name];
+                    this.name1 = name;
+                    this.name = name;
+                    this.sex = info.sex;
+                    this.changeGroup(info.group, false);
+                    for (const i of info.skills) {
+                        this.addSkill(i);
+                    }
+                    this.maxHp = get.infoMaxHp(info.maxHp);
+                    this.hp = this.maxHp;
+                    game.addVideo('reinit3', this, {
+                        name: name,
+                        hp: this.maxHp,
+                        avatar2: this.name2 == name,
+                    });
+                    this.smoothAvatar(false);
+                    this.node.avatar.setBackground(name, 'character');
+                    this.node.name.innerHTML = get.translation(name);
+                    this.update();
+                    return this;
+                }; //变身
+                lib.element.player.quseCard = async function (card, targets, cards) {
+                    const player = this;
+                    if (typeof card == 'string') {
+                        card = { name: card };
+                    }
+                    const name = card.name;
+                    const info = lib.card[name];
+                    if (!cards) {
+                        cards = [card];
+                    }
+                    const skill = _status.event.skill;
+                    if (info.contentBefore) {
+                        const next = game.createEvent(name + 'ContentBefore', false);
+                        if (next.parent) {
+                            next.parent.stocktargets = targets;
+                        }
+                        next.targets = targets;
+                        next.card = card;
+                        next.cards = cards;
+                        next.player = player;
+                        next.skill = skill;
+                        next.type = 'precard';
+                        next.forceDie = true;
+                        await next.setContent(info.contentBefore);
+                    }
+                    if (!info.multitarget) {
+                        for (const target of targets) {
+                            if (target && target.isDead()) return;
+                            if (info.notarget) return;
+                            const next = game.createEvent(name, false);
+                            if (next.parent) {
+                                next.parent.directHit = [];
+                            }
+                            next.targets = targets;
+                            next.target = target;
+                            next.card = card;
+                            if (info.type == 'delay') {
+                                next.card = {
+                                    name: name,
+                                    cards: cards,
+                                };
+                            }
+                            next.cards = cards;
+                            next.player = player;
+                            next.type = 'card';
+                            next.skill = skill;
+                            next.baseDamage = Math.max(numberq1(info.baseDamage));
+                            next.forceDie = true;
+                            next.directHit = true;
+                            await next.setContent(info.content);
+                        }
+                    } else {
+                        if (info.notarget) return;
+                        const next = game.createEvent(name, false);
+                        if (next.parent) {
+                            next.parent.directHit = [];
+                        }
+                        next.targets = targets;
+                        next.target = targets[0];
+                        next.card = card;
+                        if (info.type == 'delay') {
+                            next.card = {
+                                name: name,
+                                cards: cards,
+                            };
+                        }
+                        next.cards = cards;
+                        next.player = player;
+                        next.type = 'card';
+                        next.skill = skill;
+                        next.baseDamage = Math.max(numberq1(info.baseDamage));
+                        next.forceDie = true;
+                        next.directHit = true;
+                        await next.setContent(info.content);
+                    }
+                    if (info.contentAfter) {
+                        const next = game.createEvent(name + 'ContentAfter', false);
+                        next.targets = targets;
+                        next.card = card;
+                        next.cards = cards;
+                        next.player = player;
+                        next.skill = skill;
+                        next.type = 'postcard';
+                        next.forceDie = true;
+                        await next.setContent(info.contentAfter);
+                    }
+                }; //解构用牌
+                lib.element.player.qrevive = function () {
+                    if (this.parentNode != ui.arena) {
+                        ui.arena.appendChild(this);
+                    } //防止被移除节点
+                    this.classList.remove('removing');
+                    this.classList.remove('hidden');
+                    this.classList.remove('dead');
+                    game.log(this, '复活');
+                    if (this.maxHp < 1) this.maxHp = 1;
+                    this.hp = this.maxHp;
+                    game.addVideo('revive', this);
+                    this.removeAttribute('style');
+                    this.node.avatar.style.transform = '';
+                    this.node.avatar2.style.transform = '';
+                    this.node.hp.show();
+                    this.node.equips.show();
+                    this.node.count.show();
+                    this.update();
+                    game.players.add(this);
+                    game.dead.remove(this);
+                    this.draw(Math.min(this.maxHp, 20));
+                    return this;
+                }; //复活函数
+                lib.element.player.zhenshang = function (num, source, nature) {
+                    const player = this;
+                    let str = '受到了';
+                    if (source) {
+                        str += `来自<span class='bluetext'>${source == player ? '自己' : get.translation(source)}</span>的`;
+                    }
+                    str += get.cnNumber(num) + '点';
+                    if (nature) {
+                        str += get.translation(nature) + '属性';
+                    }
+                    str += '伤害';
+                    game.log(player, str);
+                    if (player.stat[player.stat.length - 1].damaged == undefined) {
+                        player.stat[player.stat.length - 1].damaged = num;
+                    } else {
+                        player.stat[player.stat.length - 1].damaged += num;
+                    }
+                    if (source) {
+                        if (source.stat[source.stat.length - 1].damage == undefined) {
+                            source.stat[source.stat.length - 1].damage = num;
+                        } else {
+                            source.stat[source.stat.length - 1].damage += num;
+                        }
+                    }
+                    player.hp -= num;
+                    player.update();
+                    player.$damage(source);
+                    var natures = (nature || '').split(lib.natureSeparator);
+                    game.broadcastAll(
+                        function (natures, player) {
+                            if (lib.config.animation && !lib.config.low_performance) {
+                                if (natures.includes('fire')) {
+                                    player.$fire();
+                                }
+                                if (natures.includes('thunder')) {
+                                    player.$thunder();
+                                }
+                            }
+                        },
+                        natures,
+                        player
+                    );
+                    var numx = player.hasSkillTag('nohujia') ? num : Math.max(0, num - player.hujia);
+                    player.$damagepop(-numx, natures[0]);
+                    if (player.hp <= 0 && player.isAlive()) {
+                        player.dying({ source: source });
+                    }
+                }; //真实伤害
+            };
+            mogai();
             lib.element.player.GAS = function () {
                 const skills = this.skills.slice();
                 for (const i in this.additionalSkills) {
