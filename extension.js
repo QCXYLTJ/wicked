@@ -2877,7 +2877,7 @@ game.import('extension', function () {
                                             }
                                         }
                                         if (cards.length) {
-                                            player.gain(cards, trigger.player, 'giveAuto', 'bySelf');
+                                            player.gain(cards, 'gain2');
                                         }
                                         game.log('#g【凶镬3】');
                                     }
