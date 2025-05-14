@@ -60,10 +60,20 @@ const sha = function () {
     });
 };
 sha();
+const extensionInfo = await lib.init.promises.json(`extension/缺德扩展/info.json`);
 game.import('extension', function () {
     return {
         name: '缺德扩展',
         arenaReady() {
+            if (!lib.type) {
+                lib.type = [];
+                for (const i in lib.card) {
+                    const info = lib.card[i];
+                    if (!lib.type.includes(info.type)) {
+                        lib.type.push(info.type);
+                    }
+                }
+            }
             //修改巫师卡牌,移除结束出牌效果
             const translate = {
                 gw_ganhan: '干旱',
@@ -208,7 +218,7 @@ game.import('extension', function () {
                     const {
                         result: { links },
                     } = await player
-                        .chooseButton(['选择一张武将牌', [list, 'character'], [skills, 'tdnodes']])
+                        .chooseButton(['选择一张武将牌', [list, 'character'], [skills.map((i) => [i, get.translation(i)]), 'tdnodes']])
                         .set('filterButton', (button) => skills.includes(button.link))
                         .set('ai', (button) => Math.random());
                     if (links && links[0]) {
@@ -482,32 +492,53 @@ game.import('extension', function () {
         },
         precontent() {
             get.vcardInfo = function (card) { }; //卡牌storage里面存了DOM元素会循环引用导致不能JSON.stringify
-            window.sgn = function (bool) {
-                if (bool) return 1;
-                return -1;
-            }; //true转为1,false转为-1
-            window.numberq0 = function (num) {
-                if (isNaN(Number(num))) return 0;
-                return Math.abs(Number(num));
-            }; //始终返回正数(取绝对值)
-            window.numberq1 = function (num) {
-                if (isNaN(Number(num))) return 1;
-                return Math.max(Math.abs(Number(num)), 1);
-            }; //始终返回正数且至少为1(取绝对值)
-            window.number0 = function (num) {
-                if (isNaN(Number(num))) return 0;
-                return Math.max(Number(num), 0);
-            }; //始终返回正数
-            window.number1 = function (num) {
-                if (isNaN(Number(num))) return 1;
-                return Math.max(Number(num), 1);
-            }; //始终返回正数且至少为1
-            if (!lib.number) {
-                lib.number = [];
-                for (var i = 1; i < 14; i++) {
-                    lib.number.add(i);
-                }
-            } //添加lib.number
+            const numfunc = function () {
+                if (!lib.number) {
+                    lib.number = [];
+                    for (var i = 1; i < 14; i++) {
+                        lib.number.add(i);
+                    }
+                } //添加lib.number
+                window.sgn = function (bool) {
+                    if (bool) return 1;
+                    return -1;
+                }; //true转为1,false转为-1
+                window.numberq0 = function (num) {
+                    if (isNaN(Number(num))) return 0;
+                    return Math.abs(Number(num));
+                }; //始终返回正数(取绝对值)
+                window.numberq1 = function (num) {
+                    if (isNaN(Number(num))) return 1;
+                    return Math.max(Math.abs(Number(num)), 1);
+                }; //始终返回正数且至少为1(取绝对值)
+                window.number0 = function (num) {
+                    if (isNaN(Number(num))) return 0;
+                    return Math.max(Number(num), 0);
+                }; //始终返回正数
+                window.number1 = function (num) {
+                    if (isNaN(Number(num))) return 1;
+                    return Math.max(Number(num), 1);
+                }; //始终返回正数且至少为1
+                window.deepClone = function (obj) {
+                    const clone = {};
+                    for (const key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            const info = obj[key];
+                            if (typeof info == 'object') {
+                                if (Array.isArray(info)) {
+                                    clone[key] = info.slice();
+                                } else {
+                                    clone[key] = window.deepClone(info);
+                                }
+                            } else {
+                                clone[key] = info;
+                            }
+                        }
+                    }
+                    return clone;
+                }; //深拷贝对象
+            };
+            numfunc();
             const shiwei = function () {
                 lib.element.player.filterCardx = function (card, filter) {
                     if (typeof card == 'string') {
@@ -600,49 +631,53 @@ game.import('extension', function () {
                 }; //可以转化为的牌//filter控制player.filterCard//range控制是否计算次数与距离限制
             };
             shiwei();
-            game.center = function () {
-                const list = [];
-                game.countPlayer2(function (current) {
-                    current.getHistory('lose', function (evt) {
-                        if (evt.position == ui.discardPile) list.addArray(evt.cards);
+            //—————————————————————————————————————————————————————————————————————————————获取卡牌历史相关自创函数
+            const cardfunc = function () {
+                game.center = function () {
+                    const list = [];
+                    game.countPlayer2(function (current) {
+                        current.getHistory('lose', function (evt) {
+                            if (evt.position == ui.discardPile) list.addArray(evt.cards);
+                        });
                     });
-                });
-                game.getGlobalHistory('cardMove', function (evt) {
-                    if (evt.name == 'cardsDiscard') list.addArray(evt.cards);
-                });
-                return list;
-            }; //获取本回合进入弃牌堆的牌
-            game.lose = function () {
-                const list = [];
-                for (const npc of game.players.concat(game.dead)) {
-                    const his = npc.actionHistory;
-                    const evt = his[his.length - 1];
-                    for (const e of evt.lose) {
-                        if (e.cards?.length) {
-                            list.addArray(e.cards);
+                    game.getGlobalHistory('cardMove', function (evt) {
+                        if (evt.name == 'cardsDiscard') list.addArray(evt.cards);
+                    });
+                    return list;
+                }; //获取本回合进入弃牌堆的牌
+                game.lose = function () {
+                    const list = [];
+                    for (const npc of game.players.concat(game.dead)) {
+                        const his = npc.actionHistory;
+                        const evt = his[his.length - 1];
+                        for (const e of evt.lose) {
+                            if (e.cards?.length) {
+                                list.addArray(e.cards);
+                            }
                         }
                     }
-                }
-                return list;
-            }; //获取本回合失去过的牌
-            game.xunshi = function (card) {
-                var card = lib.card[card.name];
-                if (!card) {
-                    if (QQQ.config.报错) {
-                        alert(card + card.name + '没有卡牌info');
-                        throw new Error();
+                    return list;
+                }; //获取本回合失去过的牌
+                game.xunshi = function (card) {
+                    var card = lib.card[card.name];
+                    if (!card) {
+                        if (QQQ.config.报错) {
+                            alert(card + card.name + '没有卡牌info');
+                            throw new Error();
+                        }
+                        card = lib.card['sha'];
                     }
-                    card = lib.card['sha'];
-                }
-                if (card.notarget || card.selectTarget == undefined) return false;
-                if (Array.isArray(card.selectTarget)) {
-                    if (card.selectTarget[0] < 0) return !card.toself;
-                    return card.selectTarget[0] != 1 || card.selectTarget[1] != 1;
-                } else {
-                    if (card.selectTarget < 0) return !card.toself;
-                    return card.selectTarget != 1;
-                }
-            }; //多目标牌检测
+                    if (card.notarget || card.selectTarget == undefined) return false;
+                    if (Array.isArray(card.selectTarget)) {
+                        if (card.selectTarget[0] < 0) return !card.toself;
+                        return card.selectTarget[0] != 1 || card.selectTarget[1] != 1;
+                    } else {
+                        if (card.selectTarget < 0) return !card.toself;
+                        return card.selectTarget != 1;
+                    }
+                }; //多目标牌检测
+            };
+            cardfunc();
             //—————————————————————————————————————————————————————————————————————————————解构魔改本体函数
             const mogai = function () {
                 lib.element.player.dyingResult = async function () {
@@ -904,16 +939,18 @@ game.import('extension', function () {
             game.addGroup('德', '<span style="color:rgb(230, 137, 51)">德</span>', '德', {
                 color: 'rgb(230, 137, 51)',
             });
-            const style = document.createElement('style');
-            style.innerHTML = '@keyframes QQQ{';
-            for (var i = 1; i <= 20; i++) {
-                let rand1 = Math.floor(Math.random() * 255),
-                    rand2 = Math.floor(Math.random() * 255),
-                    rand3 = Math.floor(Math.random() * 255);
-                style.innerHTML += i * 5 + `%{text-shadow: black 0 0 1px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 2px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 5px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 10px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 10px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 20px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 20px}`;
-            }
-            style.innerHTML += '}';
-            document.head.appendChild(style);
+            if (lib.config.extension_缺德扩展_文字闪烁) {
+                const style = document.createElement('style');
+                style.innerHTML = '@keyframes QQQ{';
+                for (var i = 1; i <= 20; i++) {
+                    let rand1 = Math.floor(Math.random() * 255),
+                        rand2 = Math.floor(Math.random() * 255),
+                        rand3 = Math.floor(Math.random() * 255);
+                    style.innerHTML += i * 5 + `%{text-shadow: black 0 0 1px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 2px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 5px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 10px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 10px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 20px,rgba(${rand1}, ${rand2}, ${rand3}, 0.6) 0 0 20px}`;
+                }
+                style.innerHTML += '}';
+                document.head.appendChild(style);
+            } //文字闪烁效果
             _status.jieduan = {};
             lib.skill._jieduan = {
                 trigger: {
@@ -1284,6 +1321,10 @@ game.import('extension', function () {
                     sex: 'male',
                     skills: ['QD_pojun'],
                 },
+                QD_luzhi: {
+                    sex: 'male',
+                    skills: ['QD_mingren', 'QD_zhenliang'],
+                },
             };
             for (const i in character) {
                 const info = character[i];
@@ -1528,7 +1569,9 @@ game.import('extension', function () {
                     trigger: {
                         global: ['damageAfter'],
                     },
-                    check: (event) => event.player.isFriendsOf(_status.event.player),
+                    check(event, player) {
+                        return event.player.isFriendsOf(player);
+                    },
                     filter(event, player) {
                         return event.source && (event.player == player || !player.hasSkill('煽火_1'));
                     },
@@ -3156,6 +3199,9 @@ game.import('extension', function () {
                     },
                     forced: true,
                     filter(event, player) {
+                        if (!_status.event.player) {
+                            _status.event.player = player;
+                        } //QQQ
                         return get.effect(player, event.card, event.player, player) < 0;
                     },
                     async content(event, trigger, player) {
@@ -3716,13 +3762,15 @@ game.import('extension', function () {
                             }
                         }
                     },
-                    effect: {
-                        player(card, player, target) {
-                            if (player.storage.QD_shuangjia.includes(card)) {
-                                return [0, 5];
-                            }
+                    ai: {
+                        effect: {
+                            player(card, player, target) {
+                                if (player.storage.QD_shuangjia.includes(card)) {
+                                    return [0, 5];
+                                }
+                            },
                         },
-                    },
+                    }, //QQQ
                     group: ['QD_shuangjia_1'],
                     subSkill: {
                         1: {
@@ -4496,12 +4544,21 @@ game.import('extension', function () {
                         return game.hasPlayer((q) => q.countCards('he') && q.isEnemiesOf(player));
                     },
                     async content(event, trigger, player) {
-                        let count = trigger.num;
-                        while (count-- > 0 && game.hasPlayer((q) => q.countCards('he') && q.isEnemiesOf(player))) {
-                            const { result } = await player.chooseTarget('获得其他角色的一张牌', true, (card, player, target) => target.countCards('he') && target.isEnemiesOf(player)).set('ai', (target) => -get.attitude(player, target));
-                            if (result.targets && result.targets[0]) {
-                                player.gainPlayerCard(result.targets[0], 'he', true);
-                                trigger.num--;
+                        while (trigger.num > 0 && game.hasPlayer((q) => q.countCards('he') && q.isEnemiesOf(player))) {
+                            const {
+                                result: { targets },
+                            } = await player.chooseTarget('获得其他角色的牌', (c, p, t) => t.countCards('he') && t.isEnemiesOf(p)).set('ai', (target) => -get.attitude(player, target));
+                            if (targets && targets[0]) {
+                                const {
+                                    result: { links },
+                                } = await player.gainPlayerCard(targets[0], 'he', [1, trigger.num]);
+                                if (links?.length) {
+                                    trigger.num -= links.length;
+                                } else {
+                                    break;
+                                }
+                            } else {
+                                break;
                             }
                         }
                     },
@@ -4639,61 +4696,55 @@ game.import('extension', function () {
                     async content(event, trigger, player) {
                         let count = numberq1(trigger.num);
                         while (count-- > 0) {
-                            var list = [];
-                            var choiceList = ['令一名角色回复1点体力', '令一名角色失去1点体力', '令一名角色弃置两张牌', '令一名角色摸两张牌'];
+                            const controllist = ['选项一', '选项二', '选项三', '选项四'];
+                            const choiceList = ['令一名角色回复1点体力', '令一名角色失去1点体力', '令一名角色弃置两张牌', '令一名角色摸两张牌'];
+                            const effects = [
+                                (target) => {
+                                    if (target == player && player.hp < 2) {
+                                        return 999;
+                                    }
+                                    if (player.hp > player.countCards('h')) {
+                                        return 1;
+                                    }
+                                    return get.effect(target, { name: 'tao' }, player, player);
+                                },
+                                (target) => get.effect(target, { name: 'losehp' }, player, player),
+                                (target) => 1.5 * get.effect(target, { name: 'guohe_copy2' }, player, player),
+                                (target) => get.effect(target, { name: 'wuzhong' }, player, player)
+                            ];
                             const { result } = await player
-                                .chooseControl('选项一', '选项二', '选项三', '选项四')
+                                .chooseControl(controllist)
                                 .set('prompt', get.prompt('落宠'))
                                 .set('choiceList', choiceList)
                                 .set('ai', function (event, player) {
-                                    var list = _status.event.controls.slice(0);
-                                    var gett = function (choice) {
-                                        var max = 0,
-                                            func = {
-                                                选项一(target) {
-                                                    max = get.effect(target, { name: 'tao' }, player, player);
-                                                },
-                                                选项二(target) {
-                                                    max = get.effect(target, { name: 'losehp' }, player, player);
-                                                },
-                                                选项三(target) {
-                                                    max = 1.5 * get.effect(target, { name: 'guohe_copy2' }, player, player);
-                                                },
-                                                选项四(target) {
-                                                    max = get.effect(target, { name: 'wuzhong' }, player, player);
-                                                },
-                                            }[choice];
-                                        game.countPlayer(function (current) {
-                                            func(current);
-                                        });
-                                        return max;
-                                    };
-                                    return list.sort(function (a, b) {
-                                        return gett(b) - gett(a);
-                                    })[0];
+                                    function calculateMaxEffect(choice) {
+                                        const index = controllist.indexOf(choice);
+                                        let maxEffect = -Infinity;
+                                        for (const npc of game.players) {
+                                            const effectValue = effects[index](npc);
+                                            if (effectValue > maxEffect) maxEffect = effectValue;
+                                        }
+                                        return maxEffect;
+                                    }
+                                    return controllist.slice().sort((a, b) => calculateMaxEffect(b) - calculateMaxEffect(a))[0];
                                 });
-                            var index = ['选项一', '选项二', '选项三', '选项四'].indexOf(result.control);
-                            var list = [
-                                ['令一名角色回复1点体力', (target) => get.recoverEffect(target, player, player)],
-                                ['令一名角色失去1点体力', (target) => get.effect(target, { name: 'losehp' }, player, player)],
-                                ['令一名角色弃置两张牌', (target) => get.effect(target, { name: 'guohe_copy2' }, player, player) * Math.min(1.5, target.countCards('he'))],
-                                ['令一名角色摸两张牌', (target) => get.effect(target, { name: 'wuzhong' }, player, player)],
-                            ][index];
-                            const { result: result1 } = await player.chooseTarget(list[0], true).set('ai', list[1]);
-                            if (result1.targets && result1.targets[0]) {
-                                var target = result1.targets[0];
+                            const index = controllist.indexOf(result.control);
+                            const {
+                                result: { targets },
+                            } = await player.chooseTarget(choiceList[index], true).set('ai', effects[index]);
+                            if (targets && targets[0]) {
                                 switch (index) {
                                     case 0:
-                                        target.recover();
+                                        targets[0].recover();
                                         break;
                                     case 1:
-                                        target.loseHp();
+                                        targets[0].loseHp();
                                         break;
                                     case 2:
-                                        target.chooseToDiscard(true, 'he', 2);
+                                        targets[0].chooseToDiscard(true, 'he', 2);
                                         break;
                                     case 3:
-                                        target.draw(2);
+                                        targets[0].draw(2);
                                         break;
                                 }
                             }
@@ -4731,7 +4782,6 @@ game.import('extension', function () {
                             audio: 'rezhiheng',
                             trigger: {
                                 player: ['changeHp'],
-                                source: ['damageSource'],
                                 global: ['roundStart'],
                             },
                             forced: true,
@@ -5518,18 +5568,16 @@ game.import('extension', function () {
                 },
                 比翼: {
                     trigger: {
-                        global: 'gameStart',
+                        global: ['gameStart'],
                     },
                     forced: true,
                     audio: 'ext:缺德扩展/audio:1',
-                    content() {
-                        game.countPlayer(function (Q) {
-                            if (Q != player && Q.isFriendsOf(player)) {
-                                player.line(Q, 'purple');
-                                Q.addSkill('比翼_1');
-                                Q.addSkill('比翼_2');
-                            }
-                        });
+                    async content(event, trigger, player) {
+                        for (const npc of player.getFriends()) {
+                            player.line(npc, 'purple');
+                            npc.addSkill('比翼_1');
+                            npc.addSkill('比翼_2');
+                        }
                     },
                     group: ['比翼_1', '比翼_2'],
                     subSkill: {
@@ -5543,21 +5591,15 @@ game.import('extension', function () {
                             filter(event, player) {
                                 return event.player.hasSkill('比翼_1');
                             },
-                            content() {
-                                var W = 0;
-                                game.countPlayer(function (Q) {
-                                    if (Q.hasSkill('比翼_1')) {
-                                        W += Q.hp;
-                                    }
-                                });
-                                var T = game.countPlayer(function (Q) {
-                                    return Q.hasSkill('比翼_1');
-                                });
-                                game.countPlayer(function (Q) {
-                                    if (Q.hasSkill('比翼_1')) {
-                                        Q.hp = W / T;
-                                    }
-                                });
+                            async content(event, trigger, player) {
+                                const players = game.players.filter((q) => q.hasSkill('比翼_1'));
+                                let num = 0;
+                                for (const i of players) {
+                                    num += i.hp;
+                                }
+                                for (const i of players) {
+                                    i.hp = num / players.length;
+                                }
                                 player.line(trigger.player, 'purple');
                                 player.draw(Math.ceil(numberq1(trigger.num)));
                             },
@@ -5570,39 +5612,23 @@ game.import('extension', function () {
                             forced: true,
                             audio: 'ext:缺德扩展/audio:3',
                             filter(event, player) {
-                                if (event.card.name == 'shan') {
-                                    return false;
-                                }
-                                if (get.type(event.card) != 'basic' && get.type(event.card) != 'trick') {
-                                    return false;
-                                }
-                                if (event.player == player) {
-                                    return false;
-                                }
-                                if (!event.player.hasSkill('比翼_2')) {
-                                    return false;
-                                }
-                                return true;
+                                return event.player != player && event.player.hasSkill('比翼_2') && event.targets?.length && !['equip', 'delay'].includes(get.type(event.card)) && player.countCards('he');
                             },
-                            content() {
-                                'step 0';
-                                player.line(trigger.player, 'purple');
-                                player.chooseToDiscard('hes', `弃置一张牌,令${get.translation(trigger.card)}结算两次`).set('ai', function (card) {
-                                    var trigger = _status.event.getTrigger();
+                            async content(event, trigger, player) {
+                                const {
+                                    result: { cards },
+                                } = await player.chooseToDiscard('he', `弃置一张牌,令${get.translation(trigger.card)}结算两次`).set('ai', function (card) {
                                     if (trigger.card.name == 'tiesuo') {
                                         return 0;
                                     }
-                                    var num = 0;
+                                    let num = 0;
                                     for (const i of trigger.targets) {
-                                        num += get.effect(i, trigger.card, trigger.player, _status.event.player);
+                                        num += get.effect(i, trigger.card, trigger.player, player);
                                     }
-                                    if (num <= 0) {
-                                        return 0;
-                                    }
-                                    return 7 - get.value(card);
-                                }).logSkill = '比翼_2';
-                                ('step 1');
-                                if (result.bool) {
+                                    return num - get.value(card, player);
+                                });
+                                if (cards && cards[0]) {
+                                    player.line(trigger.player, 'purple');
                                     trigger.effectCount++;
                                 }
                             },
@@ -5929,13 +5955,13 @@ game.import('extension', function () {
                             if (card.cards?.some((q) => q.gaintag?.includes('QD_shangshi'))) {
                                 return Infinity;
                             }
-                        },
+                        }, //这里是vcard
                         targetInRange(card, player) {
                             if (card.cards?.some((q) => q.gaintag?.includes('QD_shangshi'))) {
                                 return true;
                             }
                         },
-                    },
+                    }, //这里是vcard
                     trigger: {
                         player: ['loseAfter', 'changeHp'],
                     },
@@ -7408,11 +7434,18 @@ game.import('extension', function () {
                         content: 'expansion',
                     },
                     async content(event, trigger, player) {
-                        let num = Math.max(player.getExpansions('QD_qianxun').length, 1);
+                        const numq = player.getExpansions('QD_qianxun').length;
+                        let num = Math.max(numq, 1);
                         while (num > 0) {
                             const {
                                 result: { targets },
-                            } = await player.chooseTarget(`将任意名角色至多${num}张牌当作<谦逊>牌置于你的武将牌上`, (c, p, t) => t.countCards('he')).set('ai', (t) => 20 - get.attitude(player, t));
+                            } = await player.chooseTarget(`将任意名角色至多${num}张牌当作<谦逊>牌置于你的武将牌上`, (c, p, t) => t.countCards('he'))
+                                .set('ai', (t) => {
+                                    if (numq < 5) {
+                                        return 20 - get.attitude(player, t);
+                                    }
+                                    return - get.attitude(player, t);
+                                });
                             if (targets && targets[0]) {
                                 let numx = Math.min(num, targets[0].countCards('he'));
                                 const {
@@ -7446,6 +7479,7 @@ game.import('extension', function () {
                                     result: { links },
                                 } = await player.chooseButton([`选择获得一半(向下取整)的<谦逊>牌`, cards], num, true).set('ai', (button) => get.value(button.link) - 7);
                                 if (links && links[0]) {
+                                    game.cardsGotoOrdering(links);
                                     player.gain(links, 'gain2');
                                 }
                             },
@@ -8341,8 +8375,8 @@ game.import('extension', function () {
                 QD_jianying: {
                     mod: {
                         aiOrder(player, card, num) {
-                            if (lib.card[card.name]) {
-                                const log = player.storage.QD_jianying;
+                            const log = player.storage.QD_jianying;
+                            if (lib.card[card.name] && log) {
                                 if (card.number == log.number || card.suit == log.suit) {
                                     return num + 10;
                                 }
@@ -8396,6 +8430,108 @@ game.import('extension', function () {
                         },
                     },
                 },
+                //——————————————————————————————————————————————————————————————————————————————————————————————————卢植
+                // 明任
+                // 每轮开始时,你摸两张牌,将一张牌称为<任>置于武将牌上
+                QD_mingren: {
+                    trigger: {
+                        global: ['roundStart'],
+                    },
+                    forced: true,
+                    intro: {
+                        content: 'expansion',
+                    },
+                    async content(event, trigger, player) {
+                        await player.draw(2);
+                        if (player.countCards('he')) {
+                            const {
+                                result: { cards },
+                            } = await player.chooseCard('he', true).set('ai', (c) => 6 - get.value(c));
+                            if (cards && cards[0]) {
+                                player.addToExpansion(cards).gaintag.add('QD_mingren');
+                            }
+                        }
+                    },
+                },
+                // 贞良
+                // 出牌阶段限一次,你可以弃置场上与你区域内任意张与<任>花色相同的牌,分配等量伤害
+                // 当任意牌被使用后,若此牌与<任>花色相同,你摸一张牌
+                QD_zhenliang: {
+                    enable: 'phaseUse',
+                    usable: 1,
+                    filter(event, player) {
+                        const suits = player
+                            .getExpansions('QD_mingren')
+                            .map((q) => q.suit)
+                            .unique();
+                        const cards = player.getCards('he');
+                        for (const i of game.players) {
+                            cards.addArray(i.getCards('ej'));
+                        }
+                        return cards.some((c) => suits.includes(c.suit));
+                    },
+                    async content(event, trigger, player) {
+                        const suits = player
+                            .getExpansions('QD_mingren')
+                            .map((q) => q.suit)
+                            .unique();
+                        const list = ['请选择卡牌'];
+                        for (const i of game.players) {
+                            const card1 = i.getCards('hej').filter((c) => suits.includes(c.suit));
+                            const card2 = i.getCards('ej').filter((c) => suits.includes(c.suit));
+                            if (i == player && card1.length) {
+                                list.add(`你的牌`);
+                                list.add(card1);
+                            } else if (card2.length) {
+                                list.add(`${get.translation(i)}的牌`);
+                                list.add(card2);
+                            }
+                        }
+                        const {
+                            result: { links },
+                        } = await player.chooseButton(list, [1, 9]).set('ai', (b) => {
+                            return 8 - sgn(get.owner(b.link).isFriendsOf(player)) * get.value(b.link, player);
+                        });
+                        if (links && links[0]) {
+                            game.log(links, '进入弃牌堆');
+                            game.cardsDiscard(links);
+                            let num = links.length;
+                            while (num-- > 0) {
+                                const {
+                                    result: { targets },
+                                } = await player.chooseTarget('分配伤害', (c, p, t) => p != t).set('ai', (t) => -get.attitude(player, t));
+                                if (targets && targets[0]) {
+                                    targets[0].damage();
+                                }
+                            }
+                        }
+                    },
+                    ai: {
+                        order: 3,
+                        result: {
+                            player: 2,
+                        },
+                    },
+                    group: ['QD_zhenliang_1'],
+                    subSkill: {
+                        1: {
+                            trigger: {
+                                global: ['useCard'],
+                            },
+                            forced: true,
+                            filter(event, player) {
+                                const suits = player
+                                    .getExpansions('QD_mingren')
+                                    .map((q) => q.suit)
+                                    .unique();
+                                return suits.includes(event.card.suit);
+                            },
+                            async content(event, trigger, player) {
+                                player.draw();
+                            },
+                        },
+                    },
+                },
             };
             for (const i in skill) {
                 const info = skill[i];
@@ -8414,6 +8550,12 @@ game.import('extension', function () {
             } //QQQ
             Object.assign(lib.skill, skill);
             const translate = {
+                //——————————————————————————————————————————————————————————————————————————————————————————————————卢植
+                QD_luzhi: '卢植',
+                QD_mingren: '明任',
+                QD_mingren_info: '每轮开始时,你摸两张牌,将一张牌称为<任>置于武将牌上',
+                QD_zhenliang: '贞良',
+                QD_zhenliang_info: '出牌阶段限一次,你可以弃置场上与你区域内任意张与<任>花色相同的牌,分配等量伤害<br>当任意牌被使用后,若此牌与<任>花色相同,你摸一张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————沮授 监军谋国 2/3 3护甲
                 QD_jushoux: '沮授',
                 QD_shibei: '矢北',
@@ -8692,7 +8834,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————法正
                 QD_法正: '法正',
                 恩怨: '恩怨',
-                恩怨_info: '当你体力变化/每轮开始/造成伤害时,你可以获得一名其他角色一张牌并令其失去一点体力,然后你摸一张牌',
+                恩怨_info: '当你体力变化/每轮开始时,你可以获得一名其他角色一张牌并令其失去一点体力,然后你摸一张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————张辽
                 QD_张辽: '张辽',
                 突袭: '突袭',
@@ -8706,11 +8848,11 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————藤芳兰
                 QD_藤芳兰: '藤芳兰',
                 落宠: '落宠',
-                落宠_info: '体力变化/每轮开始/造成伤害时,你可以令一名角色:回复一点体力、弃置两张牌、摸两张牌、失去一点体力',
+                落宠_info: '体力变化/每轮开始时,你可以令一名角色:回复一点体力、弃置两张牌、摸两张牌、失去一点体力',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————制衡
                 QD_制衡: '制衡',
                 制衡: '制衡',
-                制衡_info: '体力变化/每轮开始/造成伤害时,你可以发动制衡或增加出牌阶段内发动制衡的次数',
+                制衡_info: '体力变化/每轮开始时,你可以发动制衡或增加出牌阶段内发动制衡的次数',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————大乔
                 QD_大乔: '大乔',
                 国色: '国色',
@@ -8768,7 +8910,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————宣公主
                 QD_宣公主: '宣公主',
                 比翼: '比翼',
-                比翼_info: '<span class="Qmenu">锁定技,</span>游戏开始时你选中另一名角色,你与其共享且永远平分体力值,任一人体力值变化后,你与其摸已损体力值张牌',
+                比翼_info: '<span class="Qmenu">锁定技,</span>游戏开始时你令友方角色获得<比翼>标记,你们共享且平分体力值<br>任意<比翼>角色体力值变化后,所有<比翼>角色摸其体力值变化张牌<br>任意<比翼>角色使用牌后,其他<比翼>角色可以弃置一张牌,令此牌额外结算一次',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————东风诸葛
                 QD_zhuge: '东风诸葛',
                 QD_jinfa: '禁法',
@@ -9038,11 +9180,12 @@ game.import('extension', function () {
                 intro: '开启后,将缺德卡牌加入牌堆',
                 init: true,
             },
+            文字闪烁: {
+                name: '<span class="Qmenu">文字闪烁</span>',
+                intro: '开启后,部分文字会附加闪烁动画效果',
+                init: true,
+            },
         },
-        package: {
-            intro: '仙界突破,对局中出现会被直呼缺德的强度',
-            author: '代码:潜在水里的火(1476811518)<br>设计:杨天佑(2229694057)&&晴雪༦ོ风铃(1138146139)',
-            version: '1.0',
-        },
+        package: extensionInfo,
     };
 });
