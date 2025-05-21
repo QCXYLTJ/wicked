@@ -13,7 +13,6 @@ for %%I in (*.jpg) do (
     set "newname=!newname:）=)!"
     :: 组合新的文件名和原始扩展名
     set "finalname=!newname!!extension!"
-
     :: 移动并重命名文件到目标目录
     if not "%%I"=="!finalname!!extension!" (
         move /Y "%%I" "!finalname!"
