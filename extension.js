@@ -633,6 +633,15 @@ game.import('extension', function () {
             shiwei();
             //—————————————————————————————————————————————————————————————————————————————获取卡牌历史相关自创函数
             const cardfunc = function () {
+                game.isxuni = function (event) {
+                    if (!event.cards) {
+                        return false;
+                    }
+                    if (event.cards.length == 1 && event.cards[0].name == event.card.name) {
+                        return true;
+                    }
+                    return null;
+                };//事件卡牌是否为虚拟牌或转化牌
                 game.center = function () {
                     const list = [];
                     game.countPlayer2(function (current) {
@@ -964,394 +973,389 @@ game.import('extension', function () {
                 },
             }; //阶段限一次技能计数清空
             //————————————————————————————————————————————————————————————————————————————————————————————角色与技能
-            const characterTitle = {
-                QD_蛊惑: `<b style='color: #00FFFF; font-size: 25px;'>無量諸佛,尚不免淪入暗影  恒沙世界,又豈能逸出夢魘</b>`,
-                QD_董卓: `<b style='color: #00FFFF; font-size: 25px;'>酒池肉林  唯我獨尊</b>`,
-                QD_孙笨: `<b style='color: #00FFFF; font-size: 25px;'>虎臣之子  嘯聚江東</b>`,
-                QD_神赵云: `<b style='color: #00FFFF; font-size: 25px;'>左持青釭  右擎龍胆</b>`,
-                QD_冯方女: `<b style='color: #00FFFF; font-size: 25px;'>殿前妝梳  風姿絕世</b>`,
-                QD_曹宪曹华: `<b style='color: #00FFFF; font-size: 25px;'>左山右樹  桃酒不斷</b>`,
-                QD_李典: `<b style='color: #00FFFF; font-size: 25px;'>乘風采日月  道藏天地間</b>`,
-                QD_杨艳: `<b style='color: #00FFFF; font-size: 25px;'>千載胭脂緋色淚  刺得龍血畫眉紅</b>`,
-                QD_神司马: `<b style='color: #00FFFF; font-size: 25px;'>老夫,即是天命</b>`,
-                QD_神吕布: `<b style='color: #00FFFF; font-size: 25px;'>神罰滅世  煉獄即臨</b>`,
-                QD_杨婉: `<b style='color: #00FFFF; font-size: 25px;'>前路之行,幽深且阻,此局不可言喻  失卻之物,恒久徘徊,此地靜謐瘋狂</b>`,
-                QD_兀突骨: `<b style='color: #00FFFF; font-size: 25px;'>火海肉魔</b>`,
-            }; //武将绰号
-            Object.assign(lib.characterTitle, characterTitle);
-            const characterIntro = {
-                QD_chunge: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
-                QD_蛊惑: '设计者:瘟疫公司扩展作者(2224219574)<br>编写者:潜在水里的火(1476811518)',
-                QD_孙笨: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
-                QD_沮授: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
-                QD_夏侯渊: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
-                QD_宣公主: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
-            }; //武将简介
-            Object.assign(lib.characterIntro, characterIntro);
-            const character = {
-                QD_diaochan: {
-                    sex: 'female',
-                    skills: ['QD_lijian', 'QD_biyue'],
-                },
-                QD_sunshangxiang: {
-                    sex: 'female',
-                    skills: ['QD_jieyin', 'QD_xiaoji'],
-                },
-                QD_daqiao: {
-                    sex: 'female',
-                    skills: ['QD_guose', 'QD_liuli'],
-                },
-                QD_zhenji: {
-                    sex: 'female',
-                    skills: ['QD_luoshen', 'QD_qingguo'],
-                },
-                QD_huangyueying: {
-                    sex: 'female',
-                    skills: ['QD_jizhi', 'QD_qicai'],
-                },
-                QD_huatuo: {
-                    sex: 'male',
-                    skills: ['QD_jijiu', 'QD_qingnang', 'QD_chuli'],
-                },
-                QD_zhouyu: {
-                    sex: 'male',
-                    skills: ['QD_yingzi', 'QD_fanjian'],
-                },
-                QD_huanggai: {
-                    sex: 'male',
-                    skills: ['QD_kurou', 'QD_zhaxiang'],
-                },
-                QD_sunquan: {
-                    sex: 'male',
-                    skills: ['QD_zhiheng', 'QD_jiuyuan'],
-                },
-                QD_zhuhuan: {
-                    sex: 'male',
-                    skills: ['QD_fenli', 'QD_pingkou'],
-                },
-                QD_lukang: {
-                    sex: 'male',
-                    skills: ['QD_qianjie', 'QD_jueyan', 'QD_poshi'],
-                },
-                QD_zhoutai: {
-                    sex: 'male',
-                    skills: ['QD_buqu'],
-                },
-                QD_luxun: {
-                    sex: 'male',
-                    skills: ['QD_qianxun', 'QD_lianying'],
-                },
-                QD_蛊惑: {
-                    sex: 'female',
-                    skills: ['蛊惑', '煽火'],
-                },
-                QD_董卓: {
-                    sex: 'male',
-                    hp: 8,
-                    maxHp: 8,
-                    skills: ['QD_暴虐', 'QD_roulin', 'oljiuchi'],
-                },
-                QD_神赵云: {
-                    sex: 'male',
-                    hp: 1,
-                    maxHp: 1,
-                    skills: ['绝境', '冲阵'],
-                },
-                QD_冯方女: {
-                    sex: 'female',
-                    skills: ['犀梳', '金梳', '琼梳', '垂涕', '妆梳'],
-                },
-                QD_曹宪曹华: {
-                    sex: 'female',
-                    skills: ['鸣', '化木', '良缘', '前盟', '羁肆'],
-                },
-                QD_李典: {
-                    sex: 'female',
-                    skills: ['恂恂'],
-                },
-                QD_杨艳: {
-                    sex: 'female',
-                    skills: ['娴婉'],
-                },
-                QD_神司马: {
-                    sex: 'male',
-                    skills: ['忍戒'],
-                },
-                QD_黄盖: {
-                    sex: 'male',
-                    skills: ['buyi', 'kurou'],
-                },
-                QD_黄盖0: {
-                    sex: 'male',
-                    skills: ['QD_kuroux'],
-                },
-                QD_黄盖1: {
-                    sex: 'male',
-                    skills: ['zhaxiang', 'kurou'],
-                },
-                QD_神吕蒙: {
-                    sex: 'male',
-                    skills: ['rebotu', 'rezhiheng', '涉猎'],
-                },
-                QD_钟会: {
-                    sex: 'male',
-                    skills: ['权计'],
-                },
-                QD_严颜: {
-                    sex: 'male',
-                    skills: ['拒战'],
-                },
-                QD_司马师: {
-                    sex: 'male',
-                    hp: 5,
-                    maxHp: 5,
-                    skills: ['泰然', '夷灭'],
-                },
-                QD_徐荣: {
-                    sex: 'male',
-                    skills: ['QD_xionghuo'],
-                },
-                QD_族吴苋: {
-                    sex: 'female',
-                    skills: ['贵相', '移荣'],
-                },
-                QD_神吕布: {
-                    sex: 'male',
-                    hp: 5,
-                    maxHp: 5,
-                    skills: ['QD_baonu', 'QD_shenfen', '神威', 'wushuang'],
-                },
-                QD_沮授: {
-                    sex: 'male',
-                    hp: 3,
-                    maxHp: 36,
-                    skills: ['矢北', '渐营', '释怀'],
-                },
-                QD_兀突骨: {
-                    sex: 'male',
-                    hp: 10000,
-                    maxHp: 10000,
-                    skills: ['QD_ranshang'],
-                },
-                QD_贾诩: {
-                    sex: 'male',
-                    skills: ['QD_luanwu', 'QD_weimu', 'QD_wansha'],
-                },
-                QD_王异: {
-                    sex: 'female',
-                    hp: 5,
-                    maxHp: 5,
-                    skills: ['贞烈', 'olmiji'],
-                },
-                QD_wenji: {
-                    sex: 'female',
-                    skills: ['QD_shuangjia'],
-                },
-                QD_董白: {
-                    sex: 'female',
-                    skills: ['连诛', '黠慧'],
-                },
-                QD_诸葛亮: {
-                    sex: 'male',
-                    skills: ['QD_guanxing', 'QD_kongcheng'],
-                },
-                QD_橘子: {
-                    sex: 'male',
-                    skills: ['橘', '给橘'],
-                },
-                QD_张角: {
-                    sex: 'male',
-                    skills: ['QD_leiji', '鬼道'],
-                },
-                QD_周瑜: {
-                    sex: 'male',
-                    skills: ['反间'],
-                },
-                QD_袁术: {
-                    sex: 'male',
-                    skills: ['QD_wangzun'],
-                },
-                QD_曹仁: {
-                    sex: 'male',
-                    skills: ['据守'],
-                },
-                QD_薛综: {
-                    sex: 'male',
-                    skills: ['安国', '复难'],
-                },
-                QD_曹昂: {
-                    sex: 'female',
-                    skills: ['慷忾'],
-                },
-                QD_法正: {
-                    sex: 'female',
-                    skills: ['恩怨'],
-                },
-                QD_张辽: {
-                    sex: 'male',
-                    skills: ['突袭', '镇卫'],
-                },
-                QD_孙登: {
-                    sex: 'male',
-                    skills: ['诓人'],
-                },
-                QD_藤芳兰: {
-                    sex: 'female',
-                    skills: ['落宠'],
-                },
-                QD_制衡: {
-                    sex: 'male',
-                    skills: ['制衡'],
-                },
-                QD_大乔: {
-                    sex: 'female',
-                    skills: ['国色', '流离'],
-                },
-                QD_徐晃: {
-                    sex: 'male',
-                    skills: ['断粮', '截辎'],
-                },
-                QD_神周瑜: {
-                    sex: 'male',
-                    skills: ['琴音', '业炎'],
-                },
-                QD_夏侯渊: {
-                    sex: 'male',
-                    skills: ['奇兵', '夺锐属性'],
-                },
-                QD_阎圃: {
-                    sex: 'male',
-                    skills: ['缓图'],
-                },
-                QD_左慈: {
-                    sex: 'male',
-                    skills: ['QD_huanshen', 'QD_xianshu'],
-                },
-                QD_杨婉: {
-                    sex: 'female',
-                    skills: ['诱言'],
-                },
-                QD_杨芷: {
-                    sex: 'female',
-                    skills: ['QD_wanyi', '埋祸'],
-                },
-                QD_宣公主: {
-                    sex: 'female',
-                    hp: 3,
-                    maxHp: 6,
-                    skills: ['比翼'],
-                },
-                QD_zhuge: {
-                    sex: 'male',
-                    skills: ['QD_dongfeng', 'QD_jinfa'],
-                },
-                QD_shenluxun: {
-                    sex: 'male',
-                    skills: ['QD_dinghuo', 'QD_junlve', 'QD_cuike'],
-                },
-                QD_chunge: {
-                    sex: 'female',
-                    skills: ['QD_jueqing', 'QD_shangshi'],
-                },
-                QD_孙笨: {
-                    sex: 'male',
-                    skills: ['QD_jiang'],
-                },
-                QD_孙权: {
-                    sex: 'male',
-                    skills: ['会玩'],
-                },
-                QD_dengai: {
-                    sex: 'male',
-                    skills: ['QD_tuntian'],
-                },
-                QD_zhongyao: {
-                    sex: 'male',
-                    skills: ['QD_huomo'],
-                },
-                QD_caozhen: {
-                    sex: 'male',
-                    skills: ['QD_sidi'],
-                },
-                QD_caozhi: {
-                    sex: 'male',
-                    skills: ['QD_luoying', 'QD_jiushi'],
-                },
-                QD_caoren: {
-                    sex: 'male',
-                    skills: ['QD_jushou', 'QD_jiewei'],
-                },
-                QD_xiahouyuan: {
-                    sex: 'male',
-                    skills: ['QD_shensu', 'QD_shebian'],
-                },
-                QD_xunyou: {
-                    sex: 'male',
-                    skills: ['QD_qice'],
-                },
-                QD_zhangrang: {
-                    sex: 'male',
-                    skills: ['QD_taoluan'],
-                },
-                QD_lvmeng: {
-                    sex: 'male',
-                    skills: ['QD_keji', 'QD_botu', 'QD_gongxin'],
-                },
-                QD_zhongyan: {
-                    sex: 'female',
-                    skills: ['QD_bolan'],
-                },
-                QD_sunhao: {
-                    sex: 'male',
-                    skills: ['QD_canshi', 'QD_chouhai'],
-                },
-                QD_zhangzhi: {
-                    sex: 'male',
-                    skills: ['QD_bixin', 'QD_feibai'],
-                },
-                QD_caocao: {
-                    sex: 'male',
-                    skills: ['QD_jianxiong', 'QD_hujia'],
-                },
-                QD_jushoux: {
-                    sex: 'male',
-                    skills: ['QD_jianying', 'QD_shibei'],
-                },
-                QD_xusheng: {
-                    sex: 'male',
-                    skills: ['QD_pojun'],
-                },
-                QD_luzhi: {
-                    sex: 'male',
-                    skills: ['QD_mingren', 'QD_zhenliang'],
-                },
-            };
-            for (const i in character) {
-                const info = character[i];
-                if (!info.hp) {
-                    info.hp = 4;
-                }
-                if (!info.maxHp) {
-                    info.maxHp = 4;
-                }
-                info.group = '德';
-                info.isZhugong = true;
-                info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
-                info.dieAudios = [`ext:缺德扩展/die/${i}.mp3`];
-            }
             game.import('character', function (lib, game, ui, get, ai, _status) {
                 const QQQ = {
                     name: '缺德扩展',
                     connect: true,
-                    character: character,
+                    character: {
+                        QD_diaochan: {
+                            sex: 'female',
+                            skills: ['QD_lijian', 'QD_biyue'],
+                        },
+                        QD_sunshangxiang: {
+                            sex: 'female',
+                            skills: ['QD_jieyin', 'QD_xiaoji'],
+                        },
+                        QD_daqiao: {
+                            sex: 'female',
+                            skills: ['QD_guose', 'QD_liuli'],
+                        },
+                        QD_zhenji: {
+                            sex: 'female',
+                            skills: ['QD_luoshen', 'QD_qingguo'],
+                        },
+                        QD_huangyueying: {
+                            sex: 'female',
+                            skills: ['QD_jizhi', 'QD_qicai'],
+                        },
+                        QD_huatuo: {
+                            sex: 'male',
+                            skills: ['QD_jijiu', 'QD_qingnang', 'QD_chuli'],
+                        },
+                        QD_zhouyu: {
+                            sex: 'male',
+                            skills: ['QD_yingzi', 'QD_fanjian'],
+                        },
+                        QD_huanggai: {
+                            sex: 'male',
+                            skills: ['QD_kurou', 'QD_zhaxiang'],
+                        },
+                        QD_sunquan: {
+                            sex: 'male',
+                            skills: ['QD_zhiheng', 'QD_jiuyuan'],
+                        },
+                        QD_zhuhuan: {
+                            sex: 'male',
+                            skills: ['QD_fenli', 'QD_pingkou'],
+                        },
+                        QD_lukang: {
+                            sex: 'male',
+                            skills: ['QD_qianjie', 'QD_jueyan', 'QD_poshi'],
+                        },
+                        QD_zhoutai: {
+                            sex: 'male',
+                            skills: ['QD_buqu'],
+                        },
+                        QD_luxun: {
+                            sex: 'male',
+                            skills: ['QD_qianxun', 'QD_lianying'],
+                        },
+                        QD_蛊惑: {
+                            sex: 'female',
+                            skills: ['蛊惑', '煽火'],
+                        },
+                        QD_董卓: {
+                            sex: 'male',
+                            hp: 8,
+                            maxHp: 8,
+                            skills: ['QD_暴虐', 'QD_roulin', 'oljiuchi'],
+                        },
+                        QD_神赵云: {
+                            sex: 'male',
+                            hp: 1,
+                            maxHp: 1,
+                            skills: ['绝境', '冲阵'],
+                        },
+                        QD_冯方女: {
+                            sex: 'female',
+                            skills: ['犀梳', '金梳', '琼梳', '垂涕', '妆梳'],
+                        },
+                        QD_曹宪曹华: {
+                            sex: 'female',
+                            skills: ['鸣', '化木', '良缘', '前盟', '羁肆'],
+                        },
+                        QD_李典: {
+                            sex: 'female',
+                            skills: ['恂恂'],
+                        },
+                        QD_杨艳: {
+                            sex: 'female',
+                            skills: ['娴婉'],
+                        },
+                        QD_神司马: {
+                            sex: 'male',
+                            skills: ['忍戒'],
+                        },
+                        QD_黄盖: {
+                            sex: 'male',
+                            skills: ['buyi', 'kurou'],
+                        },
+                        QD_黄盖0: {
+                            sex: 'male',
+                            skills: ['QD_kuroux'],
+                        },
+                        QD_黄盖1: {
+                            sex: 'male',
+                            skills: ['zhaxiang', 'kurou'],
+                        },
+                        QD_神吕蒙: {
+                            sex: 'male',
+                            skills: ['rebotu', 'rezhiheng', '涉猎'],
+                        },
+                        QD_钟会: {
+                            sex: 'male',
+                            skills: ['权计'],
+                        },
+                        QD_严颜: {
+                            sex: 'male',
+                            skills: ['拒战'],
+                        },
+                        QD_司马师: {
+                            sex: 'male',
+                            hp: 5,
+                            maxHp: 5,
+                            skills: ['泰然', '夷灭'],
+                        },
+                        QD_徐荣: {
+                            sex: 'male',
+                            skills: ['QD_xionghuo'],
+                        },
+                        QD_族吴苋: {
+                            sex: 'female',
+                            skills: ['贵相', '移荣'],
+                        },
+                        QD_神吕布: {
+                            sex: 'male',
+                            hp: 5,
+                            maxHp: 5,
+                            skills: ['QD_baonu', 'QD_shenfen', '神威', 'wushuang'],
+                        },
+                        QD_沮授: {
+                            sex: 'male',
+                            hp: 3,
+                            maxHp: 36,
+                            skills: ['矢北', '渐营', '释怀'],
+                        },
+                        QD_兀突骨: {
+                            sex: 'male',
+                            hp: 10000,
+                            maxHp: 10000,
+                            skills: ['QD_ranshang'],
+                        },
+                        QD_贾诩: {
+                            sex: 'male',
+                            skills: ['QD_luanwu', 'QD_weimu', 'QD_wansha'],
+                        },
+                        QD_王异: {
+                            sex: 'female',
+                            hp: 5,
+                            maxHp: 5,
+                            skills: ['贞烈', 'olmiji'],
+                        },
+                        QD_wenji: {
+                            sex: 'female',
+                            skills: ['QD_shuangjia'],
+                        },
+                        QD_董白: {
+                            sex: 'female',
+                            skills: ['连诛', '黠慧'],
+                        },
+                        QD_诸葛亮: {
+                            sex: 'male',
+                            skills: ['QD_guanxing', 'QD_kongcheng'],
+                        },
+                        QD_橘子: {
+                            sex: 'male',
+                            skills: ['橘', '给橘'],
+                        },
+                        QD_张角: {
+                            sex: 'male',
+                            skills: ['QD_leiji', '鬼道'],
+                        },
+                        QD_周瑜: {
+                            sex: 'male',
+                            skills: ['反间'],
+                        },
+                        QD_袁术: {
+                            sex: 'male',
+                            skills: ['QD_wangzun'],
+                        },
+                        QD_曹仁: {
+                            sex: 'male',
+                            skills: ['据守'],
+                        },
+                        QD_薛综: {
+                            sex: 'male',
+                            skills: ['安国', '复难'],
+                        },
+                        QD_曹昂: {
+                            sex: 'female',
+                            skills: ['慷忾'],
+                        },
+                        QD_法正: {
+                            sex: 'female',
+                            skills: ['恩怨'],
+                        },
+                        QD_张辽: {
+                            sex: 'male',
+                            skills: ['突袭', '镇卫'],
+                        },
+                        QD_孙登: {
+                            sex: 'male',
+                            skills: ['诓人'],
+                        },
+                        QD_藤芳兰: {
+                            sex: 'female',
+                            skills: ['落宠'],
+                        },
+                        QD_制衡: {
+                            sex: 'male',
+                            skills: ['制衡'],
+                        },
+                        QD_大乔: {
+                            sex: 'female',
+                            skills: ['国色', '流离'],
+                        },
+                        QD_徐晃: {
+                            sex: 'male',
+                            skills: ['断粮', '截辎'],
+                        },
+                        QD_神周瑜: {
+                            sex: 'male',
+                            skills: ['琴音', '业炎'],
+                        },
+                        QD_夏侯渊: {
+                            sex: 'male',
+                            skills: ['奇兵', '夺锐属性'],
+                        },
+                        QD_阎圃: {
+                            sex: 'male',
+                            skills: ['缓图'],
+                        },
+                        QD_左慈: {
+                            sex: 'male',
+                            skills: ['QD_huanshen', 'QD_xianshu'],
+                        },
+                        QD_杨婉: {
+                            sex: 'female',
+                            skills: ['诱言'],
+                        },
+                        QD_杨芷: {
+                            sex: 'female',
+                            skills: ['QD_wanyi', '埋祸'],
+                        },
+                        QD_宣公主: {
+                            sex: 'female',
+                            hp: 3,
+                            maxHp: 6,
+                            skills: ['比翼'],
+                        },
+                        QD_zhuge: {
+                            sex: 'male',
+                            skills: ['QD_dongfeng', 'QD_jinfa'],
+                        },
+                        QD_shenluxun: {
+                            sex: 'male',
+                            skills: ['QD_dinghuo', 'QD_junlve', 'QD_cuike'],
+                        },
+                        QD_chunge: {
+                            sex: 'female',
+                            skills: ['QD_jueqing', 'QD_shangshi'],
+                        },
+                        QD_孙笨: {
+                            sex: 'male',
+                            skills: ['QD_jiang'],
+                        },
+                        QD_孙权: {
+                            sex: 'male',
+                            skills: ['会玩'],
+                        },
+                        QD_dengai: {
+                            sex: 'male',
+                            skills: ['QD_tuntian'],
+                        },
+                        QD_zhongyao: {
+                            sex: 'male',
+                            skills: ['QD_huomo'],
+                        },
+                        QD_caozhen: {
+                            sex: 'male',
+                            skills: ['QD_sidi'],
+                        },
+                        QD_caozhi: {
+                            sex: 'male',
+                            skills: ['QD_luoying', 'QD_jiushi'],
+                        },
+                        QD_caoren: {
+                            sex: 'male',
+                            skills: ['QD_jushou', 'QD_jiewei'],
+                        },
+                        QD_xiahouyuan: {
+                            sex: 'male',
+                            skills: ['QD_shensu', 'QD_shebian'],
+                        },
+                        QD_xunyou: {
+                            sex: 'male',
+                            skills: ['QD_qice'],
+                        },
+                        QD_zhangrang: {
+                            sex: 'male',
+                            skills: ['QD_taoluan'],
+                        },
+                        QD_lvmeng: {
+                            sex: 'male',
+                            skills: ['QD_keji', 'QD_botu', 'QD_gongxin'],
+                        },
+                        QD_zhongyan: {
+                            sex: 'female',
+                            skills: ['QD_bolan'],
+                        },
+                        QD_sunhao: {
+                            sex: 'male',
+                            skills: ['QD_canshi', 'QD_chouhai'],
+                        },
+                        QD_zhangzhi: {
+                            sex: 'male',
+                            skills: ['QD_bixin', 'QD_feibai'],
+                        },
+                        QD_caocao: {
+                            sex: 'male',
+                            skills: ['QD_jianxiong', 'QD_hujia'],
+                        },
+                        QD_jushoux: {
+                            sex: 'male',
+                            skills: ['QD_jianying', 'QD_shibei'],
+                        },
+                        QD_xusheng: {
+                            sex: 'male',
+                            skills: ['QD_pojun'],
+                        },
+                        QD_luzhi: {
+                            sex: 'male',
+                            skills: ['QD_mingren', 'QD_zhenliang'],
+                        },
+                    },
+                    characterIntro: {
+                        QD_chunge: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
+                        QD_蛊惑: '设计者:瘟疫公司扩展作者(2224219574)<br>编写者:潜在水里的火(1476811518)',
+                        QD_孙笨: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
+                        QD_沮授: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
+                        QD_夏侯渊: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
+                        QD_宣公主: '设计者:秋(1138146139)<br>编写者:潜在水里的火(1476811518)',
+                    },
+                    characterTitle: {
+                        QD_蛊惑: `<b style='color: #00FFFF; font-size: 25px;'>無量諸佛,尚不免淪入暗影  恒沙世界,又豈能逸出夢魘</b>`,
+                        QD_董卓: `<b style='color: #00FFFF; font-size: 25px;'>酒池肉林  唯我獨尊</b>`,
+                        QD_孙笨: `<b style='color: #00FFFF; font-size: 25px;'>虎臣之子  嘯聚江東</b>`,
+                        QD_神赵云: `<b style='color: #00FFFF; font-size: 25px;'>左持青釭  右擎龍胆</b>`,
+                        QD_冯方女: `<b style='color: #00FFFF; font-size: 25px;'>殿前妝梳  風姿絕世</b>`,
+                        QD_曹宪曹华: `<b style='color: #00FFFF; font-size: 25px;'>左山右樹  桃酒不斷</b>`,
+                        QD_李典: `<b style='color: #00FFFF; font-size: 25px;'>乘風采日月  道藏天地間</b>`,
+                        QD_杨艳: `<b style='color: #00FFFF; font-size: 25px;'>千載胭脂緋色淚  刺得龍血畫眉紅</b>`,
+                        QD_神司马: `<b style='color: #00FFFF; font-size: 25px;'>老夫,即是天命</b>`,
+                        QD_神吕布: `<b style='color: #00FFFF; font-size: 25px;'>神罰滅世  煉獄即臨</b>`,
+                        QD_杨婉: `<b style='color: #00FFFF; font-size: 25px;'>前路之行,幽深且阻,此局不可言喻  失卻之物,恒久徘徊,此地靜謐瘋狂</b>`,
+                        QD_兀突骨: `<b style='color: #00FFFF; font-size: 25px;'>火海肉魔</b>`,
+                    }
                 };
+                for (const i in QQQ.character) {
+                    const info = QQQ.character[i];
+                    if (!info.hp) {
+                        info.hp = 4;
+                    }
+                    if (!info.maxHp) {
+                        info.maxHp = 4;
+                    }
+                    info.group = '德';
+                    info.isZhugong = true;
+                    info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
+                    info.dieAudios = [`ext:缺德扩展/die/${i}.mp3`];
+                }
+                lib.translate.缺德扩展_character_config = `缺德扩展`;
+                lib.config.all.characters.add('缺德扩展');
+                lib.config.characters.add('缺德扩展');
                 return QQQ;
             }); //联机
-            Object.assign(lib.character, character);
-            lib.characterPack.缺德扩展 = character;
-            lib.translate.缺德扩展_character_config = `缺德扩展`;
-            lib.config.all.characters.add('缺德扩展');
-            lib.config.characters.add('缺德扩展');
             const skill = {
                 // 阶段限一次,你可以将牌堆底一张牌扣置当任意一张基本牌或普通锦囊牌使用或打出
                 // 其他所有角色依次选择是否质疑,有人质疑则翻开此牌
@@ -3211,7 +3215,7 @@ game.import('extension', function () {
                     },
                 },
                 // 烈焰赤兔
-                // 锁定技,你计算与其他角色的距离-2,其他角色计算与你的距离+1
+                // 你计算与其他角色的距离-2,其他角色计算与你的距离+1
                 // 当你使用/被使用【决斗】/【杀】时,摸一张牌
                 QD_chitu: {
                     trigger: {
@@ -4140,28 +4144,26 @@ game.import('extension', function () {
                         name: '橘',
                         content: '当前有#个<橘>',
                     },
-                    group: ['橘_1', '橘_2'],
+                    audio: 'nzry_huaiju',
+                    trigger: {
+                        global: ['damageBegin4', 'phaseDrawBegin2'],
+                    },
+                    forced: true,
+                    filter(event, player) {
+                        return event.player.hasMark('橘') && (event.name == 'damage' || !event.numFixed);
+                    },
+                    content() {
+                        player.line(trigger.player, 'green');
+                        if (trigger.name == 'damage') {
+                            trigger.cancel();
+                            trigger.player.removeMark('橘', 1);
+                        } else {
+                            trigger.num += 2;
+                        }
+                    },
+                    group: ['橘_1'],
                     subSkill: {
                         1: {
-                            audio: 'nzry_huaiju',
-                            trigger: {
-                                global: ['damageBegin4', 'phaseDrawBegin2'],
-                            },
-                            forced: true,
-                            filter(event, player) {
-                                return event.player.hasMark('橘') && (event.name == 'damage' || !event.numFixed);
-                            },
-                            content() {
-                                player.line(trigger.player, 'green');
-                                if (trigger.name == 'damage') {
-                                    trigger.cancel();
-                                    trigger.player.removeMark('橘', 1);
-                                } else {
-                                    trigger.num += 2;
-                                }
-                            },
-                        },
-                        2: {
                             trigger: {
                                 player: 'phaseDrawBefore',
                             },
@@ -5761,7 +5763,12 @@ game.import('extension', function () {
                         const name = trigger.skill;
                         const info = lib.skill[name];
                         if (trigger.name == 'logSkillBegin') {
-                            trigger.parent.next = trigger.parent.next.filter((q) => q.name != name);
+                            const arr = trigger.parent.next;
+                            for (let i = arr.length - 1; i >= 0; i--) {
+                                if (arr[i].name === name) {
+                                    arr.splice(i, 1);
+                                }
+                            }
                         } //被终止的触发技也会计入次数
                         else {
                             const stat = trigger.player.stat;
@@ -6381,7 +6388,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————甄姬
                 //洛神
-                // 一名角色准备阶段,你进行一次判定并获得此牌,若结果不为红色,你重复此流程.锁定技,你的黑色牌不计入手牌上限和使用次数
+                // 一名角色准备阶段,你进行一次判定并获得此牌,若结果不为红色,你重复此流程.你的黑色牌不计入手牌上限和使用次数
                 QD_luoshen: {
                     mod: {
                         cardUsable(card, player, num) {
@@ -6616,7 +6623,7 @@ game.import('extension', function () {
                     },
                 },
                 //奇才
-                // 锁定技,你使用锦囊牌无距离限制,你装备区内的牌不能因替换装备外失去
+                // 你使用锦囊牌无距离限制,你装备区内的牌不能因替换装备外失去
                 QD_qicai: {
                     mod: {
                         targetInRange(card, player, target, now) {
@@ -6821,7 +6828,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————周瑜
                 //英姿
-                // 锁定技,你不因此技能获得牌时摸一张牌,每轮开始时,你可以令一名其他角色于本轮获得牌时随机少获得一张牌
+                // 你不因此技能获得牌时摸一张牌,每轮开始时,你可以令一名其他角色于本轮获得牌时随机少获得一张牌
                 QD_yingzi: {
                     trigger: {
                         player: ['gainBefore'],
@@ -6957,7 +6964,7 @@ game.import('extension', function () {
                     },
                 },
                 //詐降
-                // 锁定技,当场上一名角色失去1点体力后,你摸x张牌,增加1点护甲,使用【杀】的次数永久+1,本阶段使用【杀】无距离限制且不能被响应(X为<詐降>发动次数)
+                // 当场上一名角色失去1点体力后,你摸x张牌,增加1点护甲,使用【杀】的次数永久+1,本阶段使用【杀】无距离限制且不能被响应(X为<詐降>发动次数)
                 QD_zhaxiang: {
                     trigger: {
                         global: ['loseHpEnd'],
@@ -7040,7 +7047,7 @@ game.import('extension', function () {
                     },
                 },
                 // 救援
-                // 当其他角色使用【桃】时,你可以令此牌目标改为你,然后你摸一张牌.锁定技,其他角色对你使用的【桃】回复的体力值+1.当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力
+                // 当其他角色使用【桃】时,你可以令此牌目标改为你,然后你摸一张牌.其他角色对你使用的【桃】回复的体力值+1.当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力
                 QD_jiuyuan: {
                     trigger: {
                         global: ['taoBegin'],
@@ -7201,7 +7208,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————陆抗
                 //谦节
-                // 锁定技,你不能被横置与翻面,不能成为延时锦囊牌或其他角色拼点的目标,你可以重铸装备牌
+                // 你不能被横置与翻面,不能成为延时锦囊牌或其他角色拼点的目标,你可以重铸装备牌
                 QD_qianjie: {
                     init(player) {
                         const list = ['button', 'selectable', 'selected', 'targeted', 'selecting', 'player', 'fullskin', 'bossplayer', 'highlight', 'glow_phase'];
@@ -7354,7 +7361,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————周泰
                 //不屈
-                // 锁定技,当你进入濒死状态时,你可以令一名角色展示牌堆顶一张牌,若此牌与其武将牌上的不屈牌点数均不同,你将此牌置于其武将牌上,然后将体力回复至1.否则你获得所有不屈牌,然后其执行一次濒死结算,若其因此死亡,则终止你的濒死结算.你的手牌上限+全场不屈牌的数量
+                // 当你进入濒死状态时,你可以令一名角色展示牌堆顶一张牌,若此牌与其武将牌上的不屈牌点数均不同,你将此牌置于其武将牌上,然后将体力回复至1.否则你获得所有不屈牌,然后其执行一次濒死结算,若其因此死亡,则终止你的濒死结算.你的手牌上限+全场不屈牌的数量
                 QD_buqu: {
                     trigger: {
                         player: ['dyingBefore'],
@@ -7472,7 +7479,7 @@ game.import('extension', function () {
                     },
                 },
                 //連營
-                // 锁定技,每当一个区域内失去最后一张牌时,你摸X张牌.当你一次性获得至少两张牌时,你可以分配其中的红色牌数点火焰伤害
+                // 每当一个区域内失去最后一张牌时,你摸X张牌.当你一次性获得至少两张牌时,你可以分配其中的红色牌数点火焰伤害
                 QD_lianying: {
                     trigger: {
                         global: ['loseBegin'],
@@ -8093,7 +8100,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————兀突骨
                 // 燃殇
-                // 锁定技,当你受到其他角色伤害后,伤害来源获得伤害数个<燃殇>.任意角色失去牌时,有<燃殇>的角色失去<燃殇>数点体力
+                // 当你受到其他角色伤害后,伤害来源获得伤害数个<燃殇>.任意角色失去牌时,有<燃殇>的角色失去<燃殇>数点体力
                 QD_ranshang: {
                     intro: {
                         content: 'mark',
@@ -8127,7 +8134,7 @@ game.import('extension', function () {
                     },
                 },
                 // 悍勇
-                // 锁定技,你造成的伤害增加(体力值-游戏轮数)点
+                // 你造成的伤害增加(体力值-游戏轮数)点
                 //——————————————————————————————————————————————————————————————————————————————————————————————————孙皓
                 // 残蚀
                 // 已受伤角色回合开始时,你摸全场已受伤角色数的牌.其他未受伤角色失去牌时,随机弃置一张牌
@@ -8334,7 +8341,7 @@ game.import('extension', function () {
                 },
                 //——————————————————————————————————————————————————————————————————————————————————————————————————沮授 监军谋国 2/3 3护甲
                 // 矢北
-                // 锁定技,当任意角色受到伤害后,若是其本回合首次受到伤害,你回复一点体力,否则你令一名其他角色失去一点体力
+                // 当任意角色受到伤害后,若是其本回合首次受到伤害,你回复一点体力,否则你令一名其他角色失去一点体力
                 QD_shibei: {
                     trigger: {
                         global: ['damage'],
@@ -8387,7 +8394,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————徐盛 江东的铁壁 4/4
                 // 破军
                 // 当任意其他角色成为【杀】的目标后,你可以获得其至多体力值张牌
-                // 锁定技,若你的装备区里没有武器牌时,你视为装备【古锭刀】
+                // 若你的装备区里没有武器牌时,你视为装备【古锭刀】
                 QD_pojun: {
                     trigger: {
                         global: ['shaBegin'],
@@ -8518,22 +8525,6 @@ game.import('extension', function () {
                     },
                 },
             };
-            for (const i in skill) {
-                const info = skill[i];
-                info.nobracket = true;
-                if (!info.audio) {
-                    info.audio = 'ext:缺德扩展/audio:2';
-                }
-                if (info.subSkill) {
-                    for (const x in info.subSkill) {
-                        const infox = info.subSkill[x];
-                        if (!infox.audio) {
-                            infox.audio = 'ext:缺德扩展/audio:2';
-                        } //如果是choosebutton,语音应该是xxx_backup
-                    }
-                }
-            } //QQQ
-            Object.assign(lib.skill, skill);
             const translate = {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————卢植
                 QD_luzhi: '卢植',
@@ -8544,13 +8535,13 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————沮授 监军谋国 2/3 3护甲
                 QD_jushoux: '沮授',
                 QD_shibei: '矢北',
-                QD_shibei_info: '锁定技,当任意角色受到伤害后,若是其本回合首次受到伤害,你回复一点体力,否则你令一名其他角色失去一点体力',
+                QD_shibei_info: '当任意角色受到伤害后,若是其本回合首次受到伤害,你回复一点体力,否则你令一名其他角色失去一点体力',
                 QD_jianying: '渐营',
                 QD_jianying_info: '当任意牌被使用时,若此牌与上一张被使用的牌点数或花色相同,你摸一张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————徐盛 江东的铁壁 4/4
                 QD_xusheng: '徐盛',
                 QD_pojun: '破军',
-                QD_pojun_info: '当任意其他角色成为【杀】的目标后,你可以获得其至多体力值张牌<br>锁定技,若你的装备区里没有武器牌时,你视为装备【古锭刀】',
+                QD_pojun_info: '当任意其他角色成为【杀】的目标后,你可以获得其至多体力值张牌<br>若你的装备区里没有武器牌时,你视为装备【古锭刀】',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹操
                 QD_caocao: '曹操',
                 QD_jianxiong: '奸雄',
@@ -8604,7 +8595,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹植
                 QD_caozhi: '曹植',
                 QD_luoying: '落英',
-                QD_luoying_info: '<span class=Qmenu>锁定技,</span>任意角色不因<重铸/使用>而失去♣️️牌时,你获得之然后翻回正面.你的出牌阶段外,删除此技能括号内内容',
+                QD_luoying_info: '任意角色不因<重铸/使用>而失去♣️️牌时,你获得之然后翻回正面.你的出牌阶段外,删除此技能括号内内容',
                 QD_jiushi: '酒诗',
                 QD_jiushi_info: '你可以将一名正面朝上角色的武将牌翻面,视为使用一张酒',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————曹真
@@ -8620,27 +8611,27 @@ game.import('extension', function () {
                 蛊惑: '蛊惑',
                 蛊惑_info: '回合限一次,你可以将牌堆底一张牌扣置当任意一张基本牌或普通锦囊牌使用或打出.其他所有角色依次选择是否质疑,有人质疑则翻开此牌:若此牌与你声明的牌相同,质疑者获得一个<惑>标记;反之则此牌作废,你本回合对质疑者使用牌无距离次数限制,每有一个质疑者,你增加一次蛊惑次数;拥有<惑>标记的角色不可质疑你的蛊惑.每回合结束时你可以移除惑标记,然后视为使用移除的标记数张任意牌',
                 煽火: '煽火',
-                煽火_info: '每轮限一次,任意角色受到伤害后,你可以发起一次议事,若结果为红色,伤害来源需交给受伤者X张牌(X为受伤者已损失的体力值)并失去一点体力;若结果为黑色,伤害来源需选择一项:1.不能使用或打出手牌直到本轮结束:2.将武将牌翻至背面:若受伤者为你,则你发动此技能无次数限制.<span class=Qmenu>锁定技,</span>当场上有<惑>的角色数不小于未拥有<惑>角色时,你[议事/拼点!时「拥有<惑>的角色的意见视为与你相同/此牌点数+31',
+                煽火_info: '每轮限一次,任意角色受到伤害后,你可以发起一次议事,若结果为红色,伤害来源需交给受伤者X张牌(X为受伤者已损失的体力值)并失去一点体力;若结果为黑色,伤害来源需选择一项:1.不能使用或打出手牌直到本轮结束:2.将武将牌翻至背面:若受伤者为你,则你发动此技能无次数限制.当场上有<惑>的角色数不小于未拥有<惑>角色时,你[议事/拼点!时「拥有<惑>的角色的意见视为与你相同/此牌点数+31',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————董卓
                 QD_董卓: '董卓',
                 QD_暴虐: '暴虐',
-                QD_暴虐_info: '<span class=Qmenu>锁定技,</span>任意角色体力变化后,你进行判定,若为♠️️,你回复1点体力并获得判定牌',
+                QD_暴虐_info: '任意角色体力变化后,你进行判定,若为♠️️,你回复1点体力并获得判定牌',
                 QD_roulin: '肉林',
-                QD_roulin_info: '<span class=Qmenu>锁定技,</span>任意角色不因重铸或使用而失去♠️️牌时,你获得之',
+                QD_roulin_info: '任意角色不因重铸或使用而失去♠️️牌时,你获得之',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神赵云
                 QD_神赵云: '神赵云',
                 冲阵: '冲阵',
                 冲阵_info: '你可以将一张牌的花色按以下规则使用或打出:♥️️️当【桃】;♦️️当火【杀】;♣️️当【闪】;♠️️当【无懈可击】<br>当你以此法使用或打出【杀】或【闪】时,你可以获得对方一张牌<br>当你以此法使用【桃】时,你可以获得一名其他角色的一张牌<br>当你以此法使用【无懈可击】时,你可以获得你响应普通锦囊牌使用者的一张牌',
                 绝境: '绝境',
-                绝境_info: '<span class=Qmenu>锁定技,</span>你的手牌上限+5;当你进入或脱离濒死状态时,你摸2张牌',
+                绝境_info: '你的手牌上限+5;当你进入或脱离濒死状态时,你摸2张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————冯方女
                 QD_冯方女: '冯方女',
                 琼梳: '琼梳',
                 琼梳_info: '当你受到伤害时,你弃置X张牌并防止此伤害(X为伤害值)',
                 金梳: '金梳',
-                金梳_info: '<span class=Qmenu>锁定技,</span>回合结束时,你将手牌摸至体力上限',
+                金梳_info: '回合结束时,你将手牌摸至体力上限',
                 犀梳: '犀梳',
-                犀梳_info: '<span class=Qmenu>锁定技,</span>跳过判定和弃牌阶段',
+                犀梳_info: '跳过判定和弃牌阶段',
                 妆梳: '妆梳',
                 妆梳_info: '任意角色的回合开始时,你可以弃置一张牌,将一张<宝梳>置入其宝物区(牌的类别决定<宝梳>种类)',
                 垂涕: '垂涕',
@@ -8650,17 +8641,17 @@ game.import('extension', function () {
                 鸣: '鸣',
                 鸣_info: '出牌阶段你可随机弃置六张牌,并随机从牌堆中获得三张锦囊牌',
                 化木: '化木',
-                化木_info: '<span class=Qmenu>锁定技,</span>当你使用手牌后,你将此牌置于你的武将牌上,黑色牌称为<灵杉>,红色牌称为<玉树>',
+                化木_info: '当你使用手牌后,你将此牌置于你的武将牌上,黑色牌称为<灵杉>,红色牌称为<玉树>',
                 良缘: '良缘',
                 良缘_info: '你可以将场上一张<灵杉>/<玉树>当<酒>/<桃>使用',
                 前盟: '前盟',
-                前盟_info: '<span class=Qmenu>锁定技,</span>当<灵杉>或<玉树>数量变化后,你摸一张牌',
+                前盟_info: '当<灵杉>或<玉树>数量变化后,你摸一张牌',
                 羁肆: '羁肆',
                 羁肆_info: '限定技,准备阶段,你可以令一名其他角色获得前盟',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————李典
                 QD_李典: '李典',
                 恂恂: '恂恂',
-                恂恂_info: '<span class=Qmenu>锁定技,</span>体力变化/每轮开始时,你观看牌堆顶五张牌获得其中两张,其余牌置入牌堆底',
+                恂恂_info: '体力变化/每轮开始时,你观看牌堆顶五张牌获得其中两张,其余牌置入牌堆底',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————杨艳
                 QD_杨艳: '杨艳',
                 娴婉: '娴婉',
@@ -8668,13 +8659,13 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神司马
                 QD_神司马: '神司马',
                 忍戒: '忍戒',
-                忍戒_info: '<span class=Qmenu>锁定技,</span>当你改变体力值或出牌阶段外失去牌时,你获得等量的忍.当你的忍大于3,你获得<极略>,然后增加一点体力上限,回复两点体力,摸两张牌',
+                忍戒_info: '当你改变体力值或出牌阶段外失去牌时,你获得等量的忍.当你的忍大于3,你获得<极略>,然后增加一点体力上限,回复两点体力,摸两张牌',
                 极略: '极略',
                 极略_info: '任意角色的判定牌生效前,你可以弃1枚<忍>标记并发动〖鬼才〗<br>每当你受到伤害后,你可以弃1枚<忍>标记并发动〖放逐〗<br>出牌阶段,你可以弃1枚<忍>标记并发动〖制衡〗<br>出牌阶段,你可以弃1枚<忍>标记并获得〖完杀〗直到回合结束',
                 极略_zhiheng: '制衡',
                 极略_zhiheng_info: '你可以弃置一个忍发动一次制衡,无次数限制',
                 极略_wansha: '完杀',
-                极略_wansha_info: '<span class=Qmenu>锁定技,</span>完杀',
+                极略_wansha_info: '完杀',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————黄盖
                 QD_黄盖: '黄盖',
                 QD_黄盖0: '黄盖0',
@@ -8684,35 +8675,35 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神吕蒙
                 QD_神吕蒙: '神吕蒙',
                 涉猎: '涉猎',
-                涉猎_info: '<span class=Qmenu>锁定技,</span>摸牌阶段,你改为获得牌堆中每种花色的牌各一张',
+                涉猎_info: '摸牌阶段,你改为获得牌堆中每种花色的牌各一张',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————钟会
                 QD_钟会: '钟会',
                 权计: '权计',
-                权计_info: '①<span class=Qmenu>锁定技,</span>体力变化/出牌阶段内不因使用失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上②你的手牌上限+X(X为<权>数)',
+                权计_info: '①体力变化/出牌阶段内不因使用失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上②你的手牌上限+X(X为<权>数)',
                 排异: '排异',
                 排异_info: '转换技,你可移去一张<权>并①摸X张牌②对敌方角色各造成1点伤害(X为<权>数)',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————严颜
                 QD_严颜: '严颜',
                 拒战: '拒战',
-                拒战_info: '<span class=Qmenu>锁定技,</span>当你成为其他角色牌的目标后,你与其各摸一张牌,然后其本回合内不能再对你使用牌.当你使用牌指定任意角色为目标后,你获得其一张牌',
+                拒战_info: '当你成为其他角色牌的目标后,你与其各摸一张牌,然后其本回合内不能再对你使用牌.当你使用牌指定任意角色为目标后,你获得其一张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————司马师
                 QD_司马师: '司马师',
                 夷灭: '夷灭',
-                夷灭_info: '<span class=Qmenu>锁定技,</span>当你对其他角色造成伤害时,你将伤害值改为其体力上限',
+                夷灭_info: '当你对其他角色造成伤害时,你将伤害值改为其体力上限',
                 泰然: '泰然',
-                泰然_info: '<span class=Qmenu>锁定技,</span>回合<开始/结束>时,你将体力与手牌调整至体力上限',
+                泰然_info: '回合<开始/结束>时,你将体力与手牌调整至体力上限',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————徐荣
                 QD_徐荣: '徐荣',
                 QD_xionghuo: '凶镬',
                 QD_xionghuo_info: '游戏开始时,你获得游戏人数个<暴戾>,你对有<暴戾>的其他角色造成的伤害+x<br>任意角色濒死时,你获得<暴戾><br>出牌阶段,你可以分配<暴戾><br>你的手牌上限加全场<暴戾>数<br>有<暴戾>的其他角色的出牌阶段开始时,其随机执行x次以下项<br>①火伤且本回合不能对你使用牌<br>②体流且永久扣减手牌上限<br>③令你获得其每个区域随机牌(x为其<暴戾>数)',
                 QD_xionghuo_4: '凶镬',
-                QD_xionghuo_4_info: '<span class=Qmenu>锁定技,</span>不能对凶镬对象使用牌',
+                QD_xionghuo_4_info: '不能对凶镬对象使用牌',
                 QD_xionghuo_5: '凶镬',
-                QD_xionghuo_5_info: '<span class=Qmenu>锁定技,</span>永久扣减手牌上限',
+                QD_xionghuo_5_info: '永久扣减手牌上限',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————族吴苋
                 QD_族吴苋: '族吴苋',
                 贵相: '贵相',
-                贵相_info: '<span class=Qmenu>锁定技,</span>你的回合改为六个出牌阶段',
+                贵相_info: '你的回合改为六个出牌阶段',
                 移荣: '移荣',
                 移荣_info: '出牌阶段限一次,你可令手牌上限加一,将手牌摸到手牌上限',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神吕布
@@ -8723,35 +8714,35 @@ game.import('extension', function () {
                 QD_shenfen: '神愤',
                 QD_shenfen_info: '回合限一次,你可以弃置其他角色数枚<暴怒>,对所有其他角色造成一点伤害,令其翻面并弃置所有牌',
                 神威: '神威',
-                神威_info: '<span class=Qmenu>锁定技,</span>摸牌阶段,你额外摸X张牌,你的手牌上限+X(X为场上其他角色的数目)',
+                神威_info: '摸牌阶段,你额外摸X张牌,你的手牌上限+X(X为场上人数)',
                 修罗炼狱戟: '修罗炼狱戟',
-                修罗炼狱戟_info: '<span class=Qmenu>锁定技,</span>你使用的正收益牌指定所有友方角色为目标,负收益牌指定所有敌方角色为目标;你造成伤害前令伤害增加x/3,造成伤害后令目标回复y/4点体力,x为目标体力值与体力上限中的最大值,y为最小值',
+                修罗炼狱戟_info: '你使用的正收益牌指定所有友方角色为目标,负收益牌指定所有敌方角色为目标;你造成伤害前令伤害增加x/3,造成伤害后令目标回复y/4点体力,x为目标体力值与体力上限中的最大值,y为最小值',
                 无双方天戟: '无双方天戟',
-                无双方天戟_info: '<span class=Qmenu>锁定技,</span>当你使用牌指定目标后,你选择一项:摸一张牌/弃置其一张牌',
+                无双方天戟_info: '当你使用牌指定目标后,你选择一项:摸一张牌/弃置其一张牌',
                 玲珑: '玲珑',
-                玲珑_info: '<span class=Qmenu>锁定技,</span>负收益的牌指定你为目标时,你进行一次判定,若结果是红色,则此牌对你无效',
+                玲珑_info: '负收益的牌指定你为目标时,你进行一次判定,若结果是红色,则此牌对你无效',
                 QD_chitu: '烈焰赤兔',
-                QD_chitu_info: '锁定技,你计算与其他角色的距离-2,其他角色计算与你的距离+1<br>当你使用/被使用【决斗】/【杀】时,摸一张牌',
+                QD_chitu_info: '你计算与其他角色的距离-2,其他角色计算与你的距离+1<br>当你使用/被使用【决斗】/【杀】时,摸一张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————沮授
                 QD_沮授: '沮授',
                 矢北: '矢北',
-                矢北_info: '<span class=Qmenu>锁定技,</span>每轮你首次受到伤害后回复13点体力,每回合受到的伤害改为x.(x为本回合受伤次数)',
+                矢北_info: '每轮你首次受到伤害后回复13点体力,每回合受到的伤害改为x.(x为本回合受伤次数)',
                 渐营: '渐营',
-                渐营_info: '<span class=Qmenu>锁定技,</span>记录你每轮使用的第一张牌的点数(不覆盖上次记录),当你使用或打出与记录点数相同的牌时,你摸一张牌或弃置其他角色一张牌',
+                渐营_info: '记录你每轮使用的第一张牌的点数(不覆盖上次记录),当你使用或打出与记录点数相同的牌时,你摸一张牌或弃置其他角色一张牌',
                 释怀: '释怀',
-                释怀_info: '<span class=Qmenu>锁定技,</span>你获得所有装备过的装备牌对应的技能',
+                释怀_info: '你获得所有装备过的装备牌对应的技能',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————兀突骨
                 QD_兀突骨: '兀突骨',
                 QD_ranshang: '燃殤',
-                QD_ranshang_info: '<span class=Qmenu>锁定技,</span>当你受到火属性伤害时,伤害翻倍且获得等同于伤害数量<燃>.你的结束阶段受到<燃>标记数点火属性伤害.多目标牌和普通杀对你无效,当游戏轮数大于10时,你所在阵营获胜',
+                QD_ranshang_info: '当你受到火属性伤害时,伤害翻倍且获得等同于伤害数量<燃>.你的结束阶段受到<燃>标记数点火属性伤害.多目标牌和普通杀对你无效,当游戏轮数大于10时,你所在阵营获胜',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————贾诩
                 QD_贾诩: '贾诩',
                 QD_luanwu: '乱武',
                 QD_luanwu_info: '回合限一次,你可令所有角色依次选择视为使用一张无距离限制的杀或者伤害锦囊,若存在其他角色在<乱武>之后体力值未减少,则再发动一次<乱武>',
                 QD_weimu: '帷幕',
-                QD_weimu_info: '<span class=Qmenu>锁定技,</span>由你自己作为来源或回合内体力值与体力上限变化后,你摸变化值两倍的牌,然后免疫之.你不能成为黑色牌的目标',
+                QD_weimu_info: '由你自己作为来源或回合内体力值与体力上限变化后,你摸变化值两倍的牌,然后免疫之.你不能成为黑色牌的目标',
                 QD_wansha: '完杀',
-                QD_wansha_info: '<span class=Qmenu>锁定技,</span>任意角色体力值每累计变化两次后,你视为对其使用一张杀.你对体力值不大于你的角色造成的伤害翻倍',
+                QD_wansha_info: '任意角色体力值每累计变化两次后,你视为对其使用一张杀.你对体力值不大于你的角色造成的伤害翻倍',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————王异
                 QD_王异: '王异',
                 贞烈: '贞烈',
@@ -8759,33 +8750,33 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————蔡文姬
                 QD_wenji: '蔡文姬',
                 QD_shuangjia: '霜笳',
-                QD_shuangjia_info: '<span class=Qmenu>锁定技,</span>①游戏开始,你将牌堆顶四张牌标记为<霜笳>②其他角色至你的距离+<霜笳>数③当你失去牌后,若这些牌中有<霜笳>牌,你获得与此牌花色均不同牌各一张②你使用牌无距离和次数限制③每回合开始时,你获得所有<霜笳>牌',
+                QD_shuangjia_info: '①游戏开始,你将牌堆顶四张牌标记为<霜笳>②其他角色至你的距离+<霜笳>数③当你失去牌后,若这些牌中有<霜笳>牌,你获得与此牌花色均不同牌各一张②你使用牌无距离和次数限制③每回合开始时,你获得所有<霜笳>牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————董白
                 QD_董白: '董白',
                 连诛: '连诛',
                 连诛_info: '每轮开始/受到伤害后,你可将一张牌交给一名其他角色并获得如下效果:摸牌阶段的额定摸牌数+1,使用【杀】的次数上限+1,手牌上限+1',
                 黠慧: '黠慧',
-                黠慧_info: '<span class=Qmenu>锁定技,</span>你的黑色牌不计入手牌上限;其他角色获得你的黑色牌时,其不能使用、打出、弃置这些牌',
+                黠慧_info: '你的黑色牌不计入手牌上限;其他角色获得你的黑色牌时,其不能使用、打出、弃置这些牌',
                 黠慧_2: '黠慧',
-                黠慧_2_info: '<span class=Qmenu>锁定技,</span>不能使用、打出或弃置获得的黑色牌',
+                黠慧_2_info: '不能使用、打出或弃置获得的黑色牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————诸葛亮
                 QD_诸葛亮: '诸葛亮',
                 QD_guanxing: '观星',
-                QD_guanxing_info: '<span class=Qmenu>锁定技,</span>每回合开始时,观看牌堆顶七张牌,并任意将这些牌置于牌堆顶或牌堆底',
+                QD_guanxing_info: '每回合开始时,观看牌堆顶七张牌,并任意将这些牌置于牌堆顶或牌堆底',
                 QD_guanxing1: '观星',
-                QD_guanxing1_info: '<span class=Qmenu>锁定技,</span>准备阶段开始时,观看牌堆顶七张牌,并任意将这些牌置于牌堆顶或牌堆底',
+                QD_guanxing1_info: '准备阶段开始时,观看牌堆顶七张牌,并任意将这些牌置于牌堆顶或牌堆底',
                 QD_kongcheng: '空城',
-                QD_kongcheng_info: '<span class=Qmenu>锁定技,</span>①若你手牌只有一种类型,你不能成为伤害牌的目标②回合结束时,若你手牌只有一种类型,则取消①中的条件直至你回合开始',
+                QD_kongcheng_info: '①若你手牌只有一种类型,你不能成为伤害牌的目标②回合结束时,若你手牌只有一种类型,则取消①中的条件直至你回合开始',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————橘子
                 QD_橘子: '橘子',
                 给橘: '给橘',
                 给橘_info: '出牌阶段开始时,你可以失去1点体力或移去1个<橘>,令一名其他角色获得2个<橘>',
                 橘: '橘',
-                橘_info: '<span class=Qmenu>锁定技,</span>游戏开始时,你获得6个<橘>;有<橘>的角色摸牌阶段多摸2张牌;摸牌阶段开始前,你获得2个<橘>.当有<橘>的角色受到伤害时,防止此伤害,然后其移去1个<橘>',
+                橘_info: '游戏开始时,你获得6个<橘>;有<橘>的角色摸牌阶段多摸2张牌;摸牌阶段开始前,你获得2个<橘>.当有<橘>的角色受到伤害时,防止此伤害,然后其移去1个<橘>',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————张角
                 QD_张角: '张角',
                 QD_leiji: '雷击',
-                QD_leiji_info: '<span class=Qmenu>锁定技,</span>任意角色回合外使用或打出牌时,你进行一次判定<br>任意角色判定结束后,若结果为:♠️️️,你分配2点雷电伤害;♣️️️,你回复1点体力并分配1点雷电伤害',
+                QD_leiji_info: '任意角色回合外使用或打出牌时,你进行一次判定<br>任意角色判定结束后,若结果为:♠️️️,你分配2点雷电伤害;♣️️️,你回复1点体力并分配1点雷电伤害',
                 鬼道: '鬼道',
                 鬼道_info: '任意角色的判定牌生效前,你摸一张牌,可以打出一张牌替换之',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————周瑜
@@ -8795,13 +8786,13 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————袁术
                 QD_袁术: '袁术',
                 QD_wangzun: '妄尊',
-                QD_wangzun_info: '<span class=Qmenu>锁定技,</span>其他角色准备阶段你可以摸一张牌,然后其本回合只能对你使用牌,且手牌上限减三',
+                QD_wangzun_info: '其他角色准备阶段你可以摸一张牌,然后其本回合只能对你使用牌,且手牌上限减三',
                 QD_wangzun_1: '被妄尊',
                 QD_wangzun_1_info: '本回合只能对妄尊技能持有者使用牌,且手牌上限减三',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————曹仁
                 QD_曹仁: '曹仁',
                 据守: '据守',
-                据守_info: '<span class=Qmenu>锁定技,</span>弃牌阶段开始时,你翻面并弃置所有手牌;当你翻面时,摸等同于<护甲>值的牌;当你<出牌阶段外失去牌/出牌阶段内不因使用失去牌>时,获得等量的<护甲>',
+                据守_info: '弃牌阶段开始时,你翻面并弃置所有手牌;当你翻面时,摸等同于<护甲>值的牌;当你<出牌阶段外失去牌/出牌阶段内不因使用失去牌>时,获得等量的<护甲>',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————薛综
                 QD_薛综: '薛综',
                 安国: '安国',
@@ -8839,7 +8830,7 @@ game.import('extension', function () {
                 国色: '国色',
                 国色_info: '出牌阶段,你可弃置一张♦️️牌赋予一名其他角色不动白标记并摸一张牌',
                 不动白: '不动白',
-                不动白_info: '<span class=Qmenu>锁定技,</span>你跳过出牌阶段',
+                不动白_info: '你跳过出牌阶段',
                 流离: '流离',
                 流离_info: '当你成为其他角色牌的目标时,你可以弃置一张牌将此牌转移给其他角色',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————徐晃
@@ -8847,13 +8838,13 @@ game.import('extension', function () {
                 断粮: '断粮',
                 断粮_info: '出牌阶段,你可弃置一张黑色牌并赋予一名其他角色摸牌白标记',
                 摸牌白: '摸牌白',
-                摸牌白_info: '<span class=Qmenu>锁定技,</span>你跳过摸牌阶段',
+                摸牌白_info: '你跳过摸牌阶段',
                 截辎: '截辎',
-                截辎_info: '<span class=Qmenu>锁定技,</span>当有人跳过摸牌阶段后,你摸两张牌',
+                截辎_info: '当有人跳过摸牌阶段后,你摸两张牌',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神周瑜
                 QD_神周瑜: '神周瑜',
                 琴音: '琴音',
-                琴音_info: '<span class=Qmenu>锁定技,</span>回合结束时,你令所有友方角色回复一点体力,令所有敌方角色失去一点体力',
+                琴音_info: '回合结束时,你令所有友方角色回复一点体力,令所有敌方角色失去一点体力',
                 业炎: '业炎',
                 业炎_info: '出牌阶段,你可以分配3点火焰伤害给任意角色',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————夏侯渊
@@ -8875,36 +8866,36 @@ game.import('extension', function () {
                 QD_huanshen: '幻身',
                 QD_huanshen_info: '①游戏开始时,你随机获得两张未加入游戏的武将牌(称为<幻身>),第一个<幻身>固定为孙策.回合开始与结束时,你弃置任意张<幻身>并获得双倍<幻身>,每弃置一张<幻身>,增加一点体力上限和3点护甲,并获得一张<幻身>上的所有技能.你每次受到和造成伤害时,获得伤害值2倍的<幻身>',
                 QD_xianshu: '仙术',
-                QD_xianshu_info: '<span class=Qmenu>锁定技,</span>当你进入濒死时,随机使用牌堆中和场上的<桃>与<酒>',
+                QD_xianshu_info: '当你进入濒死时,随机使用牌堆中和场上的<桃>与<酒>',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————杨婉
                 QD_杨婉: '杨婉',
                 诱言: '诱言',
-                诱言_info: '<span class=Qmenu>锁定技,</span>阶段限一次,当你失去牌时,你获得和失去牌花色不同的牌各一张',
+                诱言_info: '阶段限一次,当你失去牌时,你获得和失去牌花色不同的牌各一张',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————杨芷
                 QD_杨芷: '杨芷',
                 QD_wanyi: '婉嫕',
-                QD_wanyi_info: '<span class=Qmenu>锁定技,</span>①当你使用牌指定目标后,你将目标的一张牌置于你的武将牌上作为<嫕>.②与<嫕>花色相同的牌不占用你手牌上限且无距离次数限制.③每回合结束/体力变化后,你获得一张<嫕>',
+                QD_wanyi_info: '①当你使用牌指定目标后,你将目标的一张牌置于你的武将牌上作为<嫕>.②与<嫕>花色相同的牌不占用你手牌上限且无距离次数限制.③每回合结束/体力变化后,你获得一张<嫕>',
                 埋祸: '埋祸',
-                埋祸_info: '<span class=Qmenu>锁定技,</span>其他角色对你使用牌时,你可以将此牌置于其武将牌上称为<祸>并令其失效<br>当你对其他角色使用牌时,移去其武将牌上的一张<祸><br>其他角色出牌阶段开始时,随机失去一半的<祸>(向上取整),然后对你使用剩余的<祸>',
+                埋祸_info: '其他角色对你使用牌时,你可以将此牌置于其武将牌上称为<祸>并令其失效<br>当你对其他角色使用牌时,移去其武将牌上的一张<祸><br>其他角色出牌阶段开始时,随机失去一半的<祸>(向上取整),然后对你使用剩余的<祸>',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————宣公主
                 QD_宣公主: '宣公主',
                 比翼: '比翼',
-                比翼_info: '<span class=Qmenu>锁定技,</span>游戏开始时你令友方角色获得<比翼>标记,你们共享且平分体力值<br>任意<比翼>角色体力变化后,所有<比翼>角色摸其体力变化张牌<br>任意<比翼>角色使用牌后,其他<比翼>角色可以弃置一张牌,令此牌额外结算一次',
+                比翼_info: '游戏开始时你令友方角色获得<比翼>标记,你们共享且平分体力值<br>任意<比翼>角色体力变化后,所有<比翼>角色摸其体力变化张牌<br>任意<比翼>角色使用牌后,其他<比翼>角色可以弃置一张牌,令此牌额外结算一次',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————东风诸葛
                 QD_zhuge: '东风诸葛',
                 QD_jinfa: '禁法',
                 QD_jinfa_info: '转换技,你可以终止其他角色一个<触发技/主动技>的发动',
                 QD_dongfeng: '东风',
                 QD_dongfeng_info: '游戏开始时,你将所有七点数牌当作<东风>置于武将牌上.每轮开始时,你将牌堆顶一张牌置入<东风>,然后你任意交换手牌与<东风>,然后你选择任意名角色,赋予其<大雾>或<狂风>标记,并弃置等量的<东风>',
-                QD_dongfeng_append: '<大雾><span class=Qmenu>锁定技,</span>当你受到伤害时,若其的属性与随机一种属性不相同,则你防止之<br><狂风><span class=Qmenu>锁定技,</span>你受到的属性伤害翻倍',
+                QD_dongfeng_append: '<大雾>当你受到伤害时,若其的属性与随机一种属性不相同,则你防止之<br><狂风>你受到的属性伤害翻倍',
                 QD_dawu: '大雾',
-                QD_dawu_info: '<span class=Qmenu>锁定技,</span>当你受到伤害时,若其的属性与随机一种属性不相同,则你防止之',
+                QD_dawu_info: '当你受到伤害时,若其的属性与随机一种属性不相同,则你防止之',
                 QD_kuangfeng: '狂风',
-                QD_kuangfeng_info: '<span class=Qmenu>锁定技,</span>你受到的属性伤害翻倍',
+                QD_kuangfeng_info: '你受到的属性伤害翻倍',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————神陆逊
                 QD_shenluxun: '神陆逊',
                 QD_junlve: '军略',
-                QD_junlve_info: '<span class=Qmenu>锁定技,</span>当你受到或造成伤害后,你获得X个<军略>标记(X为伤害点数)',
+                QD_junlve_info: '当你受到或造成伤害后,你获得X个<军略>标记(X为伤害点数)',
                 QD_cuike: '摧克',
                 QD_cuike_info: '出牌阶段开始时,若<军略>标记的数量为奇数,你可以对一名其他角色造成军略数点伤害;若<军略>标记的数量为偶数,你可以横置一名其他角色并弃置其区域内的军略数张牌.然后,若<军略>标记的数量超过7个,你可以移去全部<军略>标记并对所有其他角色造成军略数点伤害.',
                 QD_dinghuo: '绽火',
@@ -8912,15 +8903,15 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————春哥
                 QD_chunge: '春哥',
                 QD_jueqing: '绝情',
-                QD_jueqing_info: '当你<造成/受到>伤害时,你可以弃置任意张牌,此伤害改为体力流失.若弃置牌数大于对方体力值,此伤害<+1/-1>.<span class=Qmenu>锁定技,</span>当任意角色进入濒死状态时,若无伤害来源,你增加一点体力上限',
+                QD_jueqing_info: '当你<造成/受到>伤害时,你可以弃置任意张牌,此伤害改为体力流失.若弃置牌数大于对方体力值,此伤害<+1/-1>.当任意角色进入濒死状态时,若无伤害来源,你增加一点体力上限',
                 QD_shangshi: '伤逝',
-                QD_shangshi_info: '<span class=Qmenu>锁定技,</span>你手牌数始终不小于已损体力值(至少为1),你以此法获得的牌不可被响应且无次数距离限制',
+                QD_shangshi_info: '你手牌数始终不小于已损体力值(至少为1),你以此法获得的牌不可被响应且无次数距离限制',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————孙笨
                 QD_孙笨: '孙笨',
                 QD_yingzi: '英姿',
-                QD_yingzi_info: '<span class=Qmenu>锁定技,</span>你的手牌上限+x,摸牌阶段你多摸x张牌,x为你的体力上限',
+                QD_yingzi_info: '你的手牌上限+x,摸牌阶段你多摸x张牌,x为你的体力上限',
                 QD_jiang: '激昂',
-                QD_jiang_info: '<span class=Qmenu>锁定技,</span>当你使用红色基本牌或成为牌的唯一目标后,你摸一张牌,当你于因此摸牌数首次达到X张牌后,将记录值清零,你增加一点体力上限,选择一项:①回满体力;②摸X张牌;③获得<英魂>;④获得<英姿>.x为你的体力上限',
+                QD_jiang_info: '当你使用红色基本牌或成为牌的唯一目标后,你摸一张牌,当你于因此摸牌数首次达到X张牌后,将记录值清零,你增加一点体力上限,选择一项:①回满体力;②摸X张牌;③获得<英魂>;④获得<英姿>.x为你的体力上限',
                 QD_yinghun: '英魂',
                 QD_yinghun_info: '每轮开始时,你可以弃置一名其他角色至多X张牌,令一名角色摸剩余数量张牌,x为你的体力上限',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————孙权
@@ -8930,21 +8921,21 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————————邓艾
                 QD_dengai: '邓艾',
                 QD_tuntian: '屯田',
-                QD_tuntian_info: '<span class=Qmenu>锁定技,</span><出牌阶段外失去牌/出牌阶段内不因使用而失去牌>后,你可以获得其他角色的y张牌(y不大于2x),然后摸2x-y张牌(x为你失去牌的数量)',
+                QD_tuntian_info: '<出牌阶段外失去牌/出牌阶段内不因使用而失去牌>后,你可以获得其他角色的y张牌(y不大于2x),然后摸2x-y张牌(x为你失去牌的数量)',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————陆逊
                 QD_luxun: '陆逊',
                 QD_qianxun: '谦逊',
                 QD_qianxun_info: '当一张锦囊牌被使用时,你可以将任意名角色至多X张牌当作<谦逊>牌置于你的武将牌上.每回合结束时,你可以选择获得任意张<谦逊>牌(X为你<谦逊>牌数且至少为一)',
                 QD_lianying: '连营',
-                QD_lianying_info: '锁定技,每当一个区域内失去最后一张牌时,你摸X张牌.当你一次性获得至少两张牌时,你可以分配其中的红色牌数点火焰伤害',
+                QD_lianying_info: '每当一个区域内失去最后一张牌时,你摸X张牌.当你一次性获得至少两张牌时,你可以分配其中的红色牌数点火焰伤害',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————周泰
                 QD_zhoutai: '周泰',
                 QD_buqu: '不屈',
-                QD_buqu_info: '锁定技,当你进入濒死状态时,你可以令一名角色展示牌堆顶一张牌,若此牌与其武将牌上的不屈牌点数均不同,你将此牌置于其武将牌上,然后将体力回复至1.否则你获得所有不屈牌,然后其执行一次濒死结算.若其因此死亡,则终止你的濒死结算.你的手牌上限+全场不屈牌的数量',
+                QD_buqu_info: '当你进入濒死状态时,你可以令一名角色展示牌堆顶一张牌,若此牌与其武将牌上的不屈牌点数均不同,你将此牌置于其武将牌上,然后将体力回复至1.否则你获得所有不屈牌,然后其执行一次濒死结算.若其因此死亡,则终止你的濒死结算.你的手牌上限+全场不屈牌的数量',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————陆抗
                 QD_lukang: '陆抗',
                 QD_qianjie: '谦节',
-                QD_qianjie_info: '锁定技,你不能被横置与翻面,不能成为延时锦囊牌或其他角色拼点的目标,你可以重铸装备牌',
+                QD_qianjie_info: '你不能被横置与翻面,不能成为延时锦囊牌或其他角色拼点的目标,你可以重铸装备牌',
                 QD_jueyan: '决堰',
                 QD_jueyan_info: '每轮开始时,你可以废除一名角色的装备区',
                 QD_poshi: '破势',
@@ -8970,7 +8961,7 @@ game.import('extension', function () {
                 //——————————————————————————————————————————————————————————————————————————————————————————————————周瑜
                 QD_zhouyu: '周瑜',
                 QD_yingzi: '英姿',
-                QD_yingzi_info: '锁定技,你不因此技能获得牌时摸一张牌,每轮开始时,你可以令一名其他角色于本轮获得牌时随机少获得一张牌',
+                QD_yingzi_info: '你不因此技能获得牌时摸一张牌,每轮开始时,你可以令一名其他角色于本轮获得牌时随机少获得一张牌',
                 QD_yingzi_2: '英姿',
                 QD_yingzi_2_info: '获得牌时随机少获得一张牌',
                 QD_fanjian: '反间',
@@ -8988,11 +8979,11 @@ game.import('extension', function () {
                 QD_jizhi: '集智',
                 QD_jizhi_info: '每种牌名每阶段限一次,你可以将两张花色相同的非锦囊牌当任意普通锦囊牌使用;任意角色使用锦囊牌时,你摸一张牌,手牌上限+1',
                 QD_qicai: '奇才',
-                QD_qicai_info: '锁定技,你使用锦囊牌无距离限制,你装备区内的牌不能因替换装备外失去',
+                QD_qicai_info: '你使用锦囊牌无距离限制,你装备区内的牌不能因替换装备外失去',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————甄姬
                 QD_zhenji: '甄姬',
                 QD_luoshen: '洛神',
-                QD_luoshen_info: '任意角色准备阶段,你进行一次判定并获得此牌,若结果不为红色,你重复此流程.锁定技,你的黑色牌不计入手牌上限和使用次数',
+                QD_luoshen_info: '任意角色准备阶段,你进行一次判定并获得此牌,若结果不为红色,你重复此流程.你的黑色牌不计入手牌上限和使用次数',
                 QD_qingguo: '傾國',
                 QD_qingguo_info: '你可以将一张黑色牌当做【闪】使用或打出.当你需要使用或打出闪时,其他所有角色选择是否交给你一张黑色牌,你可以令没交给你牌的角色受到一点冰冻伤害或翻面',
                 //——————————————————————————————————————————————————————————————————————————————————————————————————大乔
@@ -9014,6 +9005,26 @@ game.import('extension', function () {
                 QD_xiaoji: '枭姬',
                 QD_xiaoji_info: '任意角色失去装备牌后,你摸两张牌',
             };
+            for (const i in skill) {
+                const info = skill[i];
+                info.nobracket = true;
+                const trans = translate[`${i}_info`];
+                if (info.forced) {
+                    translate[`${i}_info`] = `<span class=Qmenu>锁定技,</span>${trans}`;
+                }
+                if (!info.audio) {
+                    info.audio = 'ext:缺德扩展/audio:2';
+                }
+                if (info.subSkill) {
+                    for (const x in info.subSkill) {
+                        const infox = info.subSkill[x];
+                        if (!infox.audio) {
+                            infox.audio = 'ext:缺德扩展/audio:2';
+                        } //如果是choosebutton,语音应该是xxx_backup
+                    }
+                }
+            } //QQQ
+            Object.assign(lib.skill, skill);
             for (const i in translate) {
                 if (lib.skill[i] || lib.character[i]) {
                     translate[i] = `缺德·${translate[i]}`;
@@ -9145,9 +9156,6 @@ game.import('extension', function () {
             lib.translate.缺德扩展_card_config = `缺德扩展`;
             lib.config.all.cards.add('缺德扩展');
             lib.config.cards.add('缺德扩展');
-            game.saveConfig(`extension_缺德扩展_cards_enable`, true); //扩展卡牌全部打开
-            game.saveConfig('cards', lib.config.cards);
-            game.saveConfig('defaultcards', lib.config.cards);
         },
         config: {
             群聊: {
