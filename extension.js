@@ -3200,9 +3200,7 @@ game.import('extension', function () {
                     },
                     forced: true,
                     filter(event, player) {
-                        if (!_status.event.player) {
-                            _status.event.player = player;
-                        } //QQQ
+                        _status.event.player = player;
                         return get.effect(player, event.card, event.player, player) < 0;
                     },
                     async content(event, trigger, player) {
