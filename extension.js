@@ -8392,8 +8392,8 @@ game.import('extension', function () {
                             ai: {
                                 effect: {
                                     player(card, player, target) {
-                                        if (lib.card[card.name]) {
-                                            return [1, 1.6]; //无脑用牌
+                                        if (lib.card[card.name] && !player.getCards('h').includes(card)) {
+                                            return [1, 999]; //无脑用牌
                                         }
                                     },
                                 },
