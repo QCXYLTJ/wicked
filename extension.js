@@ -1310,6 +1310,10 @@ game.import('extension', function () {
                             sex: 'male',
                             skills: ['QD_xiaofan', 'QD_duishi', 'QD_cunmu'],
                         },
+                        QD_chengpu: {
+                            sex: 'male',
+                            skills: ['QD_lihuo', 'QD_chunliao'],
+                        },
                     },
                     characterIntro: {
                         QD_chunge: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
@@ -1970,7 +1974,7 @@ game.import('extension', function () {
                                         color: color,
                                         selectCard: -1,
                                         filterCard: () => false,
-                                        precontent() {
+                                        async precontent(event, trigger, player) {
                                             var color = lib.skill.良缘_backup.color;
                                             player.loseToDiscardpile(
                                                 player
@@ -2149,7 +2153,7 @@ game.import('extension', function () {
                                             storage: { [_status.event.buttoned]: true },
                                         },
                                         ignoreMod: true,
-                                        precontent() {
+                                        async precontent(event, trigger, player) {
                                             game.log('#g【娴婉】', event.result.card);
                                             player.popup(event.result.card, 'thunder');
                                             var E = game.players
@@ -2241,7 +2245,7 @@ game.import('extension', function () {
                                                     suit: links[0][0],
                                                     number: links[0][1],
                                                 },
-                                                precontent() {
+                                                async precontent(event, trigger, player) {
                                                     game.log('#g【娴婉】', event.result.card);
                                                     player.popup(event.result.card, 'thunder');
                                                     var E = game.players
@@ -4470,7 +4474,6 @@ game.import('extension', function () {
                                         trigger.player.addToExpansion(cards, 'gain2').gaintag.add('zhenwei2');
                                     }
                                     trigger.targets.length = 0;
-                                    trigger.parent.triggeredTargets2.length = 0;
                                 }
                             },
                             ai: {
@@ -4774,7 +4777,6 @@ game.import('extension', function () {
                                 if (result.targets && result.targets[0] && result.cards) {
                                     player.discard(result.cards);
                                     var evt = trigger.parent;
-                                    evt.triggeredTargets2.remove(player);
                                     evt.targets.remove(player);
                                     evt.targets.push(result.targets[0]);
                                 }
@@ -8547,8 +8549,117 @@ game.import('extension', function () {
                                 },
                             },
                         },
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————程普
+                        // 疠火
+                        // 你的【杀】视为火属性且可以额外指定一个目标
+                        // 你使用杀指定目标后,令目标失去一点体力并随机弃置一张牌
+                        QD_lihuo: {
+                            mod: {
+                                selectTarget(card, player, range) {
+                                    if (card.name == 'sha') {
+                                        range[1] += 1;
+                                    }
+                                },
+                            },
+                            trigger: {
+                                player: ['shaBegin'],
+                            },
+                            forced: true,
+                            async content(event, trigger, player) {
+                                trigger.card.nature == 'fire';
+                                trigger.target.loseHp();
+                                trigger.target.randomDiscard('he');
+                            },
+                        },
+                        // 醇醪
+                        // 任意【杀】被失去后,你将其称为<醇>置于武将牌上
+                        // 你可以将<醇>当任意基本牌使用或打出
+                        QD_chunliao: {
+                            trigger: {
+                                global: ['loseEnd'],
+                            },
+                            forced: true,
+                            mark: true,
+                            intro: {
+                                content: 'expansion',
+                            },
+                            filter(event, player) {
+                                return event.cards?.some((c) => c.name == 'sha') && event.parent.skill != 'QD_chunliao_1_backup';
+                            },
+                            async content(event, trigger, player) {
+                                const cards = trigger.cards.filter((c) => c.name == 'sha');
+                                player.addToExpansion(cards).gaintag = ['QD_chunliao'];
+                            },
+                            group: ['QD_chunliao_1'],
+                            subSkill: {
+                                1: {
+                                    hiddenCard(player, name) {
+                                        return get.type(name) == 'basic' && player.getExpansions('QD_chunliao').length;
+                                    },
+                                    enable: ['chooseToUse', 'chooseToRespond'],
+                                    filter(event, player) {
+                                        return game.qcard(player, 'basic').length && player.getExpansions('QD_chunliao').length;
+                                    },
+                                    chooseButton: {
+                                        dialog(event, player) {
+                                            return ui.create.dialog('醇醪', [game.qcard(player, 'basic'), 'vcard'], 'hidden');
+                                        },
+                                        check(button, buttons) {
+                                            const player = _status.event.player;
+                                            const num = player.getUseValue(
+                                                {
+                                                    name: button.link[2],
+                                                    nature: button.link[3],
+                                                },
+                                                null,
+                                                true
+                                            ); //null是距离限制//true是用牌次数限制
+                                            return number0(num) + 10; //不加这行会出现有button返回undefined导致无法判断直接结束回合                                            
+                                        },//有些高手写的卡牌返回NAN也会导致无法判断,所以用 Number
+                                        backup(links, player) {
+                                            return {
+                                                filterCard: () => false,
+                                                selectCard: -1,
+                                                viewAs: {
+                                                    name: links[0][2],
+                                                    nature: links[0][3],
+                                                    suit: links[0][0],
+                                                    number: links[0][1],
+                                                },
+                                                ignoreMod: true,
+                                                async precontent(event, trigger, player) {
+                                                    const cards = player.getExpansions('QD_chunliao').randomGets(1);
+                                                    event.result.cards = cards;
+                                                    event.result.card.cards = cards;
+                                                },
+                                            };
+                                        },
+                                        prompt(links, player) {
+                                            return '将一名角色武将牌横置并视为使用基本牌';
+                                        },
+                                    },
+                                    ai: {
+                                        order: 20,
+                                        result: {
+                                            player(player) {
+                                                if (_status.event.dying) {
+                                                    return get.attitude(player, _status.event.dying);
+                                                }
+                                                return 10;
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
                     },
                     translate: {
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————程普
+                        QD_chengpu: '程普',
+                        QD_lihuo: '疠火',
+                        QD_lihuo_info: '你的【杀】视为火属性且可以额外指定一个目标<br>你使用杀指定目标后,令目标失去一点体力并随机弃置一张牌',
+                        QD_chunliao: '醇醪',
+                        QD_chunliao_info: '任意【杀】被失去后,你将其称为<醇>置于武将牌上<br>你可以将<醇>当任意基本牌使用或打出',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————彭羕
                         QD_pengyang: '彭羕',
                         QD_xiaofan: '嚣翻',
