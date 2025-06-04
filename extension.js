@@ -1628,10 +1628,10 @@ game.import('extension', function () {
                         },
                         QD_roulin: {
                             trigger: {
-                                global: ['loseAfter'],
+                                global: ['loseEnd'],
                             },
                             filter(event, player) {
-                                if (event.getParent(2).name == 'recast' || event.parent.name == 'useCard') {
+                                if (event.getParent(2).name == 'recast' || ['useCard', 'respond', 'equip'].includes(event.parent.name)) {
                                     return false;
                                 }
                                 return event.cards && event.cards.some((q) => q.suit == 'spade');
@@ -1764,11 +1764,11 @@ game.import('extension', function () {
                         },
                         垂涕: {
                             trigger: {
-                                global: ['loseAfter'],
+                                global: ['loseEnd'],
                             },
                             forced: true,
                             filter(event, player) {
-                                return event.type != 'use' && event.cards?.length;
+                                return !['useCard', 'respond', 'equip'].includes(event.parent.name) && event.cards?.length;
                             },
                             async content(event, trigger, player) {
                                 for (const i of trigger.cards) {
@@ -2011,7 +2011,7 @@ game.import('extension', function () {
                         },
                         前盟: {
                             trigger: {
-                                global: ['loseAfter', 'equipAfter', 'addJudgeAfter', 'gainAfter', 'loseAsyncAfter', 'addToExpansionAfter'],
+                                global: ['loseEnd', 'equipAfter', 'addJudgeAfter', 'gainAfter', 'loseAsyncAfter', 'addToExpansionAfter'],
                             },
                             filter(event, player) {
                                 if (event.name == 'addToExpansion') {
@@ -2279,7 +2279,7 @@ game.import('extension', function () {
                         忍戒: {
                             audio: 'renjie2',
                             trigger: {
-                                player: ['changeHp', 'loseAfter'],
+                                player: ['changeHp', 'loseEnd'],
                             },
                             filter(event, player) {
                                 if ('lose' == event.name) {
@@ -2588,11 +2588,11 @@ game.import('extension', function () {
                             },
                         },
                         // 权计
-                        // 当你体力变化/出牌阶段内不因使用失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上
+                        // 当你体力变化/出牌阶段内不因使用而失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上
                         // 你的手牌上限+X(X为<权>的数量)
                         权计: {
                             trigger: {
-                                player: ['changeHp', 'loseAfter'],
+                                player: ['changeHp', 'loseEnd'],
                             },
                             forced: true,
                             filter(event, player) {
@@ -2601,7 +2601,7 @@ game.import('extension', function () {
                                         return false;
                                     }
                                     if (player == _status.currentPhase && event.getParent('phaseUse', true)) {
-                                        return event.parent.name != 'useCard';
+                                        return !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                     }
                                 }
                                 return true;
@@ -4252,15 +4252,15 @@ game.import('extension', function () {
                                         player.draw(player.hujia);
                                     },
                                 },
-                                // 当你<出牌阶段外失去牌/出牌阶段内不因使用失去牌>时,获得等量的<护甲>
+                                // 当你<出牌阶段外失去牌/出牌阶段内不因使用而失去牌>时,获得等量的<护甲>
                                 2: {
                                     trigger: {
-                                        player: ['loseAfter'],
+                                        player: ['loseEnd'],
                                     },
                                     forced: true,
                                     filter(event, player) {
-                                        if (player == _status.currentPhase && event.getParent('phaseUse', true) && event.parent.name == 'useCard') {
-                                            return false;
+                                        if (player == _status.currentPhase && event.getParent('phaseUse', true)) {
+                                            return !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                         }
                                         return event.cards?.length;
                                     },
@@ -5251,7 +5251,7 @@ game.import('extension', function () {
                         诱言: {
                             forced: true,
                             trigger: {
-                                player: ['loseAfter'],
+                                player: ['loseEnd'],
                             },
                             filter(event, player) {
                                 return event.cards?.length && !player.hasSkill('诱言_1', null, null, false);
@@ -5824,7 +5824,7 @@ game.import('extension', function () {
                                 },
                             }, //这里是vcard
                             trigger: {
-                                player: ['loseAfter', 'changeHp'],
+                                player: ['loseEnd', 'changeHp'],
                             },
                             forced: true,
                             filter: (event, player) => player.countCards('h') < numberq1(player.maxHp - player.hp),
@@ -5956,12 +5956,12 @@ game.import('extension', function () {
                         QD_tuntian: {
                             audio: 'tuntian',
                             trigger: {
-                                player: ['loseAfter'],
+                                player: ['loseEnd'],
                             },
                             forced: true,
                             filter(event, player) {
                                 if (player == _status.currentPhase && event.getParent('phaseUse', true)) {
-                                    return event.parent.name != 'useCard';
+                                    return !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                 }
                                 return true;
                             },
@@ -7504,14 +7504,14 @@ game.import('extension', function () {
                         },
                         //——————————————————————————————————————————————————————————————————————————————————————————————————曹植
                         //落英
-                        //当一名角色<不因重铸或使用而>失去♣️️牌时,你获得之翻回正面.你的出牌阶段外,删除此技能括号内内容
+                        //任意角色<不因使用而>失去♣️️牌时,你获得之翻回正面.你的出牌阶段外,删除此技能括号内内容
                         QD_luoying: {
                             trigger: {
-                                global: ['loseAfter'],
+                                global: ['loseEnd'],
                             },
                             filter(event, player) {
-                                if ((event.getParent(2).name == 'recast' || event.parent.name == 'useCard') && _status.currentPhase == player && event.getParent('phaseUse', true)) {
-                                    return false;
+                                if (_status.currentPhase == player && event.getParent('phaseUse', true)) {
+                                    return event.getParent(2).name != 'recast' && !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                 }
                                 return event.cards && event.cards.some((q) => q.suit == 'club');
                             },
@@ -8626,7 +8626,7 @@ game.import('extension', function () {
                         //——————————————————————————————————————————————————————————————————————————————————————————————————曹植
                         QD_caozhi: '曹植',
                         QD_luoying: '落英',
-                        QD_luoying_info: '任意角色不因<重铸/使用>而失去♣️️牌时,你获得之翻回正面.你的出牌阶段外,删除此技能括号内内容',
+                        QD_luoying_info: '任意角色<不因使用而>失去♣️️牌时,你获得之翻回正面.你的出牌阶段外,删除此技能括号内内容',
                         QD_jiushi: '酒诗',
                         QD_jiushi_info: '你可以将一名正面朝上角色的武将牌翻面,视为使用一张酒',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————曹真
@@ -8666,7 +8666,7 @@ game.import('extension', function () {
                         妆梳: '妆梳',
                         妆梳_info: '任意角色的回合开始时,你可以弃置一张牌,将一张<宝梳>置入其宝物区(牌的类别决定<宝梳>种类)',
                         垂涕: '垂涕',
-                        垂涕_info: '当牌因弃置而置入弃牌堆后,若你能使用此牌,你可以使用之',
+                        垂涕_info: '任意牌不因使用而失去后,你可以使用之',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————曹宪曹华
                         QD_曹宪曹华: '曹宪曹华',
                         鸣: '鸣',
@@ -8710,7 +8710,7 @@ game.import('extension', function () {
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————钟会
                         QD_钟会: '钟会',
                         权计: '权计',
-                        权计_info: '①体力变化/出牌阶段内不因使用失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上②你的手牌上限+X(X为<权>数)',
+                        权计_info: '①体力变化/出牌阶段内不因使用而失去牌/出牌阶段外失去牌时,你摸一张牌,将一张牌称为<权>置于武将牌上②你的手牌上限+X(X为<权>数)',
                         排异: '排异',
                         排异_info: '转换技,你可移去一张<权>并①摸X张牌②对敌方角色各造成1点伤害(X为<权>数)',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————严颜
@@ -8819,7 +8819,7 @@ game.import('extension', function () {
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————曹仁
                         QD_曹仁: '曹仁',
                         据守: '据守',
-                        据守_info: '弃牌阶段开始时,你翻面并弃置所有手牌;当你翻面时,摸等同于<护甲>值的牌;当你<出牌阶段外失去牌/出牌阶段内不因使用失去牌>时,获得等量的<护甲>',
+                        据守_info: '弃牌阶段开始时,你翻面并弃置所有手牌;当你翻面时,摸等同于<护甲>值的牌;当你<出牌阶段外失去牌/出牌阶段内不因使用而失去牌>时,获得等量的<护甲>',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————薛综
                         QD_薛综: '薛综',
                         安国: '安国',
