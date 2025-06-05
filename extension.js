@@ -5814,12 +5814,12 @@ game.import('extension', function () {
                         QD_shangshi: {
                             mod: {
                                 cardUsable(card, player, num) {
-                                    if (card.cards?.some((q) => q.gaintag?.includes('QD_shangshi'))) {
+                                    if (card.cards?.some((q) => q.gaintag?.includes('eternal_QD_shangshi'))) {
                                         return Infinity;
                                     }
                                 }, //这里是vcard
                                 targetInRange(card, player) {
-                                    if (card.cards?.some((q) => q.gaintag?.includes('QD_shangshi'))) {
+                                    if (card.cards?.some((q) => q.gaintag?.includes('eternal_QD_shangshi'))) {
                                         return true;
                                     }
                                 },
@@ -5830,7 +5830,10 @@ game.import('extension', function () {
                             forced: true,
                             filter: (event, player) => player.countCards('h') < numberq1(player.maxHp - player.hp),
                             async content(event, trigger, player) {
-                                player.drawTo(numberq1(player.maxHp - player.hp)).gaintag = ['QD_shangshi'];
+                                const { result } = await player.drawTo(numberq1(player.maxHp - player.hp));
+                                for (const card of result) {
+                                    card.addGaintag('eternal_QD_shangshi');
+                                }
                             },
                             ai: {
                                 effect: {
@@ -5852,7 +5855,7 @@ game.import('extension', function () {
                                     },
                                     forced: true,
                                     filter(event, player) {
-                                        return event.cards?.some((card) => card.gaintag?.includes('QD_shangshi'));
+                                        return event.cards?.some((card) => card.gaintag?.includes('eternal_QD_shangshi'));
                                     },
                                     async content(event, trigger, player) {
                                         trigger.directHit = true;
@@ -6889,7 +6892,9 @@ game.import('extension', function () {
                             },
                         },
                         // 救援
-                        // 当其他角色使用【桃】时,你可以令此牌目标改为你,你摸一张牌.其他角色对你使用的【桃】回复的体力值+1.当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力
+                        // 当其他角色使用【桃】时,你可以令此牌目标改为你,你摸一张牌.其他角色对你使用的【桃】回复的体力值+1
+                        // 当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力
+                        // 若此时为你的出牌阶段,此技能本阶段失效
                         QD_jiuyuan: {
                             trigger: {
                                 global: ['taoBegin'],
@@ -6946,6 +6951,9 @@ game.import('extension', function () {
                                                 } else {
                                                     npc.loseHp();
                                                 }
+                                            }
+                                            if (_status.currentPhase == player && event.getParent('phaseUse', true)) {
+                                                player.tempBanSkill('QD_jiuyuan_1', { global: 'phaseUseEnd' });
                                             }
                                         }
                                     },
@@ -9084,7 +9092,7 @@ game.import('extension', function () {
                         QD_zhiheng: '制衡',
                         QD_zhiheng_info: '回合限一次,你可以弃置一名角色任意张牌,摸等量的牌(若弃置了一个区域内的所有牌,则多摸一张牌)',
                         QD_jiuyuan: '救援',
-                        QD_jiuyuan_info: '当其他角色使用【桃】时,你可以令此牌目标改为你,你摸一张牌<br>其他角色对你使用的【桃】回复的体力值+1<br>当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力',
+                        QD_jiuyuan_info: '当其他角色使用【桃】时,你可以令此牌目标改为你,你摸一张牌<br>其他角色对你使用的【桃】回复的体力值+1<br>当你需要使用【桃】时,你可以令任意其他角色代替你使用一张【桃】,否则该角色失去一点体力<br>若此时为你的出牌阶段,此技能本阶段失效',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————黄盖
                         QD_huanggai: '黄盖',
                         QD_kurou: '苦肉',
