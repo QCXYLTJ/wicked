@@ -1635,10 +1635,9 @@ game.import('extension', function () {
                                 global: ['loseEnd'],
                             },
                             filter(event, player) {
-                                if (event.getParent(2).name == 'recast' || ['useCard', 'respond', 'equip'].includes(event.parent.name)) {
-                                    return false;
+                                if (event.cards && event.cards.some((q) => q.suit == 'spade')) {
+                                    return !['recast', 'gift'].includes(event.getParent(2).name) && !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                 }
-                                return event.cards && event.cards.some((q) => q.suit == 'spade');
                             },
                             forced: true,
                             async content(event, trigger, player) {
@@ -7513,7 +7512,7 @@ game.import('extension', function () {
                             },
                             filter(event, player) {
                                 if (_status.currentPhase == player && event.getParent('phaseUse', true)) {
-                                    return event.getParent(2).name != 'recast' && !['useCard', 'respond', 'equip'].includes(event.parent.name);
+                                    return !['recast', 'gift'].includes(event.getParent(2).name) && !['useCard', 'respond', 'equip'].includes(event.parent.name);
                                 }
                                 return event.cards && event.cards.some((q) => q.suit == 'club');
                             },
