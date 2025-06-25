@@ -8775,12 +8775,6 @@ game.import('extension', function () {
                         绝境_info: '你的手牌上限+5;当你进入或脱离濒死状态时,你摸2张牌',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————冯方女
                         QD_冯方女: '冯方女',
-                        琼梳: '琼梳',
-                        琼梳_info: '当你受到伤害时,你弃置X张牌并防止此伤害(X为伤害值)',
-                        金梳: '金梳',
-                        金梳_info: '回合结束时,你将手牌摸至体力上限',
-                        犀梳: '犀梳',
-                        犀梳_info: '跳过判定和弃牌阶段',
                         妆梳: '妆梳',
                         妆梳_info: '任意角色的回合开始时,你可以弃置一张牌,将一张<宝梳>置入其宝物区(牌的类别决定<宝梳>种类)',
                         垂涕: '垂涕',
@@ -8864,14 +8858,6 @@ game.import('extension', function () {
                         QD_shenfen_info: '回合限一次,你可以弃置其他角色数枚<暴怒>,对所有其他角色造成一点伤害,令其翻面并弃置所有牌',
                         神威: '神威',
                         神威_info: '摸牌阶段,你额外摸X张牌,你的手牌上限+X(X为场上人数)',
-                        修罗炼狱戟: '修罗炼狱戟',
-                        修罗炼狱戟_info: '你使用的正收益牌指定所有友方角色为目标,负收益牌指定所有敌方角色为目标;你造成伤害前令伤害增加x/3,造成伤害后令目标回复y/4点体力,x为目标体力值与体力上限中的最大值,y为最小值',
-                        无双方天戟: '无双方天戟',
-                        无双方天戟_info: '当你使用牌指定目标后,你选择一项:摸一张牌/弃置其一张牌',
-                        玲珑: '玲珑',
-                        玲珑_info: '负收益的牌指定你为目标时,你进行一次判定,若结果是红色,则此牌对你无效',
-                        QD_chitu: '烈焰赤兔',
-                        QD_chitu_info: '你计算与其他角色的距离-2,其他角色计算与你的距离+1<br>当你使用/被使用【决斗】/【杀】时,摸一张牌',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————沮授
                         QD_沮授: '沮授',
                         矢北: '矢北',
@@ -9159,15 +9145,19 @@ game.import('extension', function () {
                     info.isZhugong = true;
                     info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
                     info.dieAudios = [`ext:缺德扩展/die/${i}.mp3`];
-                    QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
+                    if (QQQ.translate[i]) {
+                        QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
+                    }
                 }
                 for (const i in QQQ.skill) {
                     const info = QQQ.skill[i];
                     info.nobracket = true;
-                    QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
-                    const trans = QQQ.translate[`${i}_info`];
-                    if (info.forced) {
-                        QQQ.translate[`${i}_info`] = `<span class=Qmenu>锁定技,</span>${trans}`;
+                    if (QQQ.translate[i]) {
+                        QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
+                        const trans = QQQ.translate[`${i}_info`];
+                        if (info.forced) {
+                            QQQ.translate[`${i}_info`] = `<span class=Qmenu>锁定技,</span>${trans}`;
+                        }
                     }
                     if (!info.audio) {
                         info.audio = 'ext:缺德扩展/audio:2';
@@ -9186,118 +9176,138 @@ game.import('extension', function () {
                 lib.config.characters.add('缺德扩展');
                 return QQQ;
             }); //联机
-            const card = {
-                QD_chitu: {
-                    fullskin: true,
-                    type: 'equip',
-                    subtype: 'equip4',
-                    distance: {
-                        globalFrom: -2,
-                        globalTo: 1,
+            game.import('card', function (lib, game, ui, get, ai, _status) {
+                const QQQ = {
+                    name: '缺德扩展',
+                    connect: true,
+                    card: {
+                        QD_chitu: {
+                            fullskin: true,
+                            type: 'equip',
+                            subtype: 'equip4',
+                            distance: {
+                                globalFrom: -2,
+                                globalTo: 1,
+                            },
+                            skills: ['QD_chitu'],
+                            ai: {
+                                equipValue: 60,
+                            },
+                        },
+                        无双方天戟: {
+                            type: 'equip',
+                            subtype: 'equip1',
+                            skills: ['无双方天戟'],
+                            distance: {
+                                attackFrom: -2,
+                            },
+                            ai: {
+                                equipValue: 85,
+                            },
+                        },
+                        修罗炼狱戟: {
+                            type: 'equip',
+                            subtype: 'equip1',
+                            skills: ['修罗炼狱戟'],
+                            distance: {
+                                attackFrom: -3,
+                            },
+                            ai: {
+                                equipValue: 70,
+                            },
+                        },
+                        玲珑: {
+                            type: 'equip',
+                            subtype: 'equip2',
+                            ai: {
+                                equipValue: 80,
+                            },
+                            skills: ['玲珑'],
+                        },
+                        犀梳: {
+                            fullskin: true,
+                            type: 'equip',
+                            subtype: 'equip5',
+                            skills: ['犀梳'],
+                            ai: {
+                                equipValue: 80,
+                            },
+                        },
+                        琼梳: {
+                            fullskin: true,
+                            type: 'equip',
+                            subtype: 'equip5',
+                            skills: ['琼梳'],
+                            ai: {
+                                equipValue: 70,
+                            },
+                        },
+                        金梳: {
+                            fullskin: true,
+                            type: 'equip',
+                            subtype: 'equip5',
+                            skills: ['金梳'],
+                            ai: {
+                                equipValue: 70,
+                            },
+                        },
                     },
-                    skills: ['QD_chitu'],
-                    ai: {
-                        equipValue: 60,
+                    translate: {
+                        修罗炼狱戟: '修罗炼狱戟',
+                        修罗炼狱戟_info: '你使用的正收益牌指定所有友方角色为目标,负收益牌指定所有敌方角色为目标;你造成伤害前令伤害增加x/3,造成伤害后令目标回复y/4点体力,x为目标体力值与体力上限中的最大值,y为最小值',
+                        无双方天戟: '无双方天戟',
+                        无双方天戟_info: '当你使用牌指定目标后,你选择一项:摸一张牌/弃置其一张牌',
+                        玲珑: '玲珑',
+                        玲珑_info: '负收益的牌指定你为目标时,你进行一次判定,若结果是红色,则此牌对你无效',
+                        QD_chitu: '烈焰赤兔',
+                        QD_chitu_info: '你计算与其他角色的距离-2,其他角色计算与你的距离+1<br>当你使用/被使用【决斗】/【杀】时,摸一张牌',
+                        琼梳: '琼梳',
+                        琼梳_info: '当你受到伤害时,你弃置X张牌并防止此伤害(X为伤害值)',
+                        金梳: '金梳',
+                        金梳_info: '回合结束时,你将手牌摸至体力上限',
+                        犀梳: '犀梳',
+                        犀梳_info: '跳过判定和弃牌阶段',
                     },
-                },
-                无双方天戟: {
-                    type: 'equip',
-                    subtype: 'equip1',
-                    skills: ['无双方天戟'],
-                    distance: {
-                        attackFrom: -2,
-                    },
-                    ai: {
-                        equipValue: 85,
-                    },
-                },
-                修罗炼狱戟: {
-                    type: 'equip',
-                    subtype: 'equip1',
-                    skills: ['修罗炼狱戟'],
-                    distance: {
-                        attackFrom: -3,
-                    },
-                    ai: {
-                        equipValue: 70,
-                    },
-                },
-                玲珑: {
-                    type: 'equip',
-                    subtype: 'equip2',
-                    ai: {
-                        equipValue: 80,
-                    },
-                    skills: ['玲珑'],
-                },
-                犀梳: {
-                    fullskin: true,
-                    type: 'equip',
-                    subtype: 'equip5',
-                    skills: ['犀梳'],
-                    ai: {
-                        equipValue: 80,
-                    },
-                },
-                琼梳: {
-                    fullskin: true,
-                    type: 'equip',
-                    subtype: 'equip5',
-                    skills: ['琼梳'],
-                    ai: {
-                        equipValue: 70,
-                    },
-                },
-                金梳: {
-                    fullskin: true,
-                    type: 'equip',
-                    subtype: 'equip5',
-                    skills: ['金梳'],
-                    ai: {
-                        equipValue: 70,
-                    },
-                },
-            };
-            for (const i in card) {
-                const info = card[i];
-                if (!info.audio) {
-                    info.audio = 'ext:缺德扩展/audio:2';
-                }
-                info.modTarget = true;
-                info.equipDelay = false;
-                info.loseDelay = false;
-                if (info.enable == undefined) {
-                    info.enable = true;
-                }
-                if (info.type == 'equip') {
-                    info.toself = true;
-                    info.filterTarget = function (card, player, target) {
-                        return player == target && target.canEquip(card, true);
-                    };
-                    info.selectTarget = -1;
-                    info.ai.basic = {
-                        equipValue: info.ai.equipValue,
-                        useful: 0.1,
-                        value: info.ai.equipValue,
-                        order: info.ai.equipValue,
-                    };
-                    info.content = async function (event, trigger, player) {
-                        if (event.cards.length) {
-                            event.target.equip(event.cards[0]);
-                        }
-                    };
-                    info.ai.result = {
-                        target: (player, target, card) => get.equipResult(player, target, card),
-                    };
-                }
-                if (!info.image) {
-                    if (info.fullskin) {
-                        info.image = `ext:缺德扩展/image/${i}.png`;
-                    } else {
-                        info.image = `ext:缺德扩展/image/${i}.jpg`;
+                };
+                for (const i in QQQ.card) {
+                    const info = QQQ.card[i];
+                    if (!info.audio) {
+                        info.audio = 'ext:缺德扩展/audio:2';
                     }
-                }
-                if (lib.config.extension_缺德扩展_缺德卡牌) {
+                    info.modTarget = true;
+                    info.equipDelay = false;
+                    info.loseDelay = false;
+                    if (info.enable == undefined) {
+                        info.enable = true;
+                    }
+                    if (info.type == 'equip') {
+                        info.toself = true;
+                        info.filterTarget = function (card, player, target) {
+                            return player == target && target.canEquip(card, true);
+                        };
+                        info.selectTarget = -1;
+                        info.ai.basic = {
+                            equipValue: info.ai.equipValue,
+                            useful: 0.1,
+                            value: info.ai.equipValue,
+                            order: info.ai.equipValue,
+                        };
+                        info.content = async function (event, trigger, player) {
+                            if (event.cards.length) {
+                                event.target.equip(event.cards[0]);
+                            }
+                        };
+                        info.ai.result = {
+                            target: (player, target, card) => get.equipResult(player, target, card),
+                        };
+                    }
+                    if (!info.image) {
+                        if (info.fullskin) {
+                            info.image = `ext:缺德扩展/image/${i}.png`;
+                        } else {
+                            info.image = `ext:缺德扩展/image/${i}.jpg`;
+                        }
+                    }
                     lib.inpile.add(i);
                     if (info.mode && !info.mode.includes(lib.config.mode)) continue;
                     let num = Math.ceil(Math.random() * 5);
@@ -9305,22 +9315,16 @@ game.import('extension', function () {
                         lib.card.list.push([lib.suits.randomGet(), lib.number.randomGet(), i]);
                     }
                 }
-            }
-            Object.assign(lib.card, card);
-            lib.cardPack.缺德扩展 = Object.keys(card);
-            lib.translate.缺德扩展_card_config = `缺德扩展`;
-            lib.config.all.cards.add('缺德扩展');
-            lib.config.cards.add('缺德扩展');
+                lib.config.all.cards.add('缺德扩展');
+                lib.config.cards.add('缺德扩展');
+                lib.translate.缺德扩展_card_config = '缺德扩展';
+                return QQQ;
+            });
         },
         config: {
             群聊: {
                 name: '<a href="https://qm.qq.com/q/SsTlU9gc24"><span class=Qmenu>【缺德扩展】群聊: 771901025</span></a>',
                 clear: true,
-            },
-            缺德卡牌: {
-                name: '<span class=Qmenu>缺德卡牌</span>',
-                intro: '开启后,将缺德卡牌加入牌堆',
-                init: true,
             },
             文字闪烁: {
                 name: '<span class=Qmenu>文字闪烁</span>',
