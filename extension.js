@@ -9154,10 +9154,10 @@ game.import('extension', function () {
                     info.nobracket = true;
                     if (QQQ.translate[i]) {
                         QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
-                        const trans = QQQ.translate[`${i}_info`];
-                        if (info.forced) {
-                            QQQ.translate[`${i}_info`] = `<span class=Qmenu>锁定技,</span>${trans}`;
-                        }
+                    }
+                    const trans = QQQ.translate[`${i}_info`];
+                    if (info.forced && trans) {
+                        QQQ.translate[`${i}_info`] = `<span class=Qmenu>锁定技,</span>${trans}`;
                     }
                     if (!info.audio) {
                         info.audio = 'ext:缺德扩展/audio:2';
