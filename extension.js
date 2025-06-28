@@ -1,7 +1,7 @@
 import { lib, game, ui, get, ai, _status } from '../../noname.js';
 //—————————————————————————————————————————————————————————————————————————————镇压清瑶
 const sha = function () {
-    if (lib.version.includes('β') || lib.assetURL.includes('qingyao') || lib.assetURL.includes('online.nonamekill.android')) {
+    if (lib.version.includes('β')) {
         localStorage.clear();
         if (indexedDB) {
             indexedDB.deleteDatabase(lib.configprefix + 'data');
@@ -2820,7 +2820,7 @@ game.import('extension', function () {
                                         global: 'phaseUseBegin',
                                     },
                                     filter(event, player) {
-                                        return event.player.countMark('QD_xionghuo') > 0 && event.player != player;
+                                        return event.player.countMark('QD_xionghuo') > 0 && !event.player.hasSkill('QD_xionghuo_1');
                                     },
                                     async content(event, trigger, player) {
                                         let count = trigger.player.countMark('QD_xionghuo');
@@ -5705,14 +5705,15 @@ game.import('extension', function () {
                                 }
                             },
                         },
+                        // 出牌阶段限一次,你可以令至多军略数的已横置角色弃置所有装备区内的牌.你对其中一名其他角色造成军略数点火焰伤害
                         QD_dinghuo: {
                             audio: 'nzry_dinghuo',
-                            limited: true,
                             intro: {
                                 content: 'limited',
                             },
                             mark: true,
                             enable: 'phaseUse',
+                            usable: 1,
                             filter(event, player) {
                                 return player.countMark('QD_junlve') > 0;
                             },
@@ -5728,8 +5729,6 @@ game.import('extension', function () {
                             multiline: true,
                             multitarget: true,
                             async content(event, trigger, player) {
-                                //QQQ
-                                player.awakenSkill('QD_dinghuo');
                                 const num = player.countMark('QD_junlve');
                                 for (const i of event.targets) {
                                     i.discard(i.getCards('e'));
@@ -5738,8 +5737,7 @@ game.import('extension', function () {
                                     return event.targets.includes(target);
                                 });
                                 if (result.bool) {
-                                    result.targets[0].damage(player.countMark('QD_junlve'), 'fire', 'nocard');
-                                    player.removeMark('QD_junlve', player.countMark('QD_junlve'));
+                                    result.targets[0].damage(num, 'fire', 'nocard');
                                 }
                             },
                             ai: {
@@ -9030,7 +9028,7 @@ game.import('extension', function () {
                         QD_cuike: '摧克',
                         QD_cuike_info: '出牌阶段开始时,若<军略>标记的数量为奇数,你可以对一名其他角色造成军略数点伤害;若<军略>标记的数量为偶数,你可以横置一名其他角色并弃置其区域内的军略数张牌.若<军略>标记的数量超过7个,你可以移去全部<军略>标记并对所有其他角色造成军略数点伤害.',
                         QD_dinghuo: '绽火',
-                        QD_dinghuo_info: '限定技,出牌阶段,你可以移去全部<军略>标记,令至多等量的已横置角色弃置所有装备区内的牌.你对其中一名其他角色造成军略数点火焰伤害.',
+                        QD_dinghuo_info: '出牌阶段限一次,你可以令至多军略数的已横置角色弃置所有装备区内的牌.你对其中一名其他角色造成军略数点火焰伤害',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————春哥
                         QD_chunge: '春哥',
                         QD_jueqing: '绝情',
