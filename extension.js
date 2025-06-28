@@ -972,6 +972,36 @@ game.import('extension', function () {
                     }
                 },
             }; //阶段限一次技能计数清空
+            HTMLDivElement.prototype.setBackgroundImage = function (src) {
+                if (Array.isArray(src)) {
+                    src = src[0];
+                }
+                if (src.includes('.mp4')) {
+                    this.style.backgroundImage = 'none';
+                    this.setBackgroundMp4(src);
+                }
+                else {
+                    this.style.backgroundImage = `url(${src})`;
+                }
+                return this;
+            }; //引入mp4新逻辑
+            HTMLElement.prototype.setBackgroundMp4 = function (src) {
+                const video = document.createElement('video');
+                video.src = src;
+                video.style.cssText = 'bottom: 0%; left: 0%; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; position: absolute; z-index: -5;';
+                video.autoplay = true;
+                video.loop = true;
+                this.appendChild(video);
+                video.addEventListener('error', function () {
+                    video.remove();
+                });
+                return video;
+            }; //给父元素添加一个覆盖的背景mp4
+            HTMLElement.prototype.QD_BG = function (name) {
+                const src = `extension/缺德扩展/mp4/${name}.mp4`;
+                const video = this.setBackgroundMp4(src);
+                return video;
+            }; //缺德扩展背景mp4
             //————————————————————————————————————————————————————————————————————————————————————————————角色与技能
             game.import('character', function (lib, game, ui, get, ai, _status) {
                 const QQQ = {
@@ -1313,6 +1343,11 @@ game.import('extension', function () {
                         QD_chengpu: {
                             sex: 'male',
                             skills: ['QD_lihuo', 'QD_chunliao'],
+                        },
+                        QD_xushi: {
+                            sex: 'female',
+                            skills: ['QD_wengua', 'QD_fuzhu'],
+                            trashBin: [`ext:缺德扩展/mp4/QD_xushi.mp4`],
                         },
                     },
                     characterIntro: {
@@ -8657,8 +8692,87 @@ game.import('extension', function () {
                                 },
                             },
                         },
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————徐氏
+                        // 问卦
+                        // 其他角色出牌阶段开始时,你获得其一张牌称为<卦>,你可以将其手牌与牌堆顶x张牌任意交换(x为其手牌数)
+                        // 卦象凶险,汝,恐有血光之灾
+                        QD_wengua: {
+                            trigger: {
+                                global: ['phaseUseBegin'],
+                            },
+                            forced: true,
+                            lastDo: true,
+                            filter(event, player) {
+                                return event.player.countCards('he') && event.player != player;
+                            },
+                            async content(event, trigger, player) {
+                                const { result: { links } } = await player.gainPlayerCard('he', trigger.player, true).set('gaintag', ['QD_wengua']);
+                                const cardx = trigger.player.getCards('h');
+                                if (cardx.length) {
+                                    const cardtop = get.cards(cardx.length);
+                                    const {
+                                        result: { moved },
+                                    } = await player
+                                        .chooseToMove()
+                                        .set('list', [['手牌', cardx], ['牌堆顶', cardtop]])
+                                        .set('prompt', '将其手牌与牌堆顶牌任意交换')
+                                        .set('filterMove', function (from, to) {
+                                            return typeof to != 'number';
+                                        })
+                                        .set('processAI', function (list) {
+                                            const cards = cardtop.concat(cardx);
+                                            cards.sort((a, b) => {
+                                                if (get.attitude(player, trigger.player) > 0) {
+                                                    return get.value(b) - get.value(a);
+                                                }
+                                                return get.value(a) + (get.tag(a, 'damage') ? 5 : -5) - get.value(b) - (get.tag(b, 'damage') ? 5 : -5);
+                                            });
+                                            return [cards.slice(0, cardx.length), cards.slice(cardx.length)];
+                                        }); //给别人观星
+                                    if (moved?.length) {
+                                        trigger.player.gain(moved[0], 'gain2');
+                                        moved[1].reverse();
+                                        for (const i of moved[1]) {
+                                            ui.cardPile.insertBefore(i, ui.cardPile.firstChild);
+                                        }
+                                        game.log(`${get.translation(moved[1])}置于牌堆顶`);
+                                    }
+                                }
+                            },
+                        },
+                        // 伏诛
+                        // 其他角色出牌阶段结束时,你可以弃置区域内所有<卦>,展示牌堆顶10x张牌,对其使用其中所有伤害牌(x为你弃置的<卦>数)
+                        QD_fuzhu: {
+                            trigger: {
+                                global: ['phaseUseEnd'],
+                            },
+                            check(event, player) {
+                                return event.player.isEnemiesOf(player);
+                            },
+                            filter(event, player) {
+                                return player.hasCard((c) => c.hasGaintag('QD_wengua'), 'hej') && event.player != player;
+                            },
+                            firstDo: true,
+                            async content(event, trigger, player) {
+                                const cards = player.getCards('hej', (c) => c.hasGaintag('QD_wengua'));
+                                const cardstop = get.cards(cards.length * 10);
+                                player.discard(cards);
+                                player.showCards(cardstop);
+                                const cardsdamage = cardstop.filter((c) => get.tag(c, 'damage'));
+                                for (const c of cardsdamage) {
+                                    await player.useCard(c, trigger.player);
+                                }
+                            },
+                        },
                     },
                     translate: {
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————徐氏
+                        QD_xushi: '徐氏',
+                        QD_wengua: '问卦',
+                        QD_wengua_info: '其他角色出牌阶段开始时,你获得其一张牌称为<卦>,你可以将其手牌与牌堆顶x张牌任意交换(x为其手牌数)',
+                        QD_wengua_append: '卦象凶险,汝,恐有血光之灾',
+                        QD_fuzhu: '伏诛',
+                        QD_fuzhu_info: '其他角色出牌阶段结束时,你可以弃置区域内所有<卦>,展示牌堆顶10x张牌,对其使用其中所有伤害牌(x为你弃置的<卦>数)',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————程普
                         QD_chengpu: '程普',
                         QD_lihuo: '疠火',
@@ -9141,7 +9255,9 @@ game.import('extension', function () {
                     }
                     info.group = '德';
                     info.isZhugong = true;
-                    info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
+                    if (!info.trashBin) {
+                        info.trashBin = [`ext:缺德扩展/image/${i}.jpg`];
+                    }
                     info.dieAudios = [`ext:缺德扩展/die/${i}.mp3`];
                     if (QQQ.translate[i]) {
                         QQQ.translate[i] = `缺德·${QQQ.translate[i]}`;
