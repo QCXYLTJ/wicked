@@ -668,21 +668,19 @@ game.import('extension', function () {
                     return list;
                 }; //获取本回合失去过的牌
                 game.xunshi = function (card) {
-                    var card = lib.card[card.name];
-                    if (!card) {
-                        if (QQQ.config.报错) {
-                            alert(card + card.name + '没有卡牌info');
-                            throw new Error();
-                        }
-                        card = lib.card['sha'];
+                    const name = card.name;
+                    const info = lib.card[name];
+                    if (!info) {
+                        console.warn(name + '没有卡牌info');
+                        return false;
                     }
-                    if (card.notarget || card.selectTarget == undefined) return false;
-                    if (Array.isArray(card.selectTarget)) {
-                        if (card.selectTarget[0] < 0) return !card.toself;
-                        return card.selectTarget[0] != 1 || card.selectTarget[1] != 1;
+                    if (info.notarget || info.selectTarget == undefined) return false;
+                    if (Array.isArray(info.selectTarget)) {
+                        if (info.selectTarget[0] < 0) return !info.toself;
+                        return info.selectTarget[0] != 1 || info.selectTarget[1] != 1;
                     } else {
-                        if (card.selectTarget < 0) return !card.toself;
-                        return card.selectTarget != 1;
+                        if (info.selectTarget < 0) return !info.toself;
+                        return info.selectTarget != 1;
                     }
                 }; //多目标牌检测
             };
@@ -1464,12 +1462,11 @@ game.import('extension', function () {
                             },
                             ai: {
                                 fireAttack: true,
-                                respondShan: true,
+                                save: true,
                                 respondSha: true,
-                                skillTagFilter(player) {
-                                    if (!player.countCards('hs')) {
-                                        return false;
-                                    }
+                                respondShan: true,
+                                skillTagFilter(player, tag) {
+                                    return Boolean(player.countCards('hs'));
                                 },
                                 order: 120,
                                 result: {
@@ -1738,6 +1735,18 @@ game.import('extension', function () {
                                 }
                             },
                             ai: {
+                                save: true,
+                                respondSha: true,
+                                respondShan: true,
+                                skillTagFilter(player, tag) {
+                                    if (tag == 'respondSha') {
+                                        return Boolean(player.countCards('hes', { suit: 'diamond' }));
+                                    }
+                                    if (tag == 'respondShan') {
+                                        return Boolean(player.countCards('hes', { suit: 'club' }));
+                                    }
+                                    return Boolean(player.countCards('hes', { color: 'heart' }));
+                                },
                                 order: 15,
                                 result: {
                                     player(player) {
@@ -2026,12 +2035,8 @@ game.import('extension', function () {
                                 },
                             },
                             ai: {
-                                basic: {
-                                    order: 1,
-                                },
-                                order(name, player) {
-                                    return 1;
-                                },
+                                save: true,
+                                order: 1,
                                 result: {
                                     player(player) {
                                         if (_status.event.dying) {
@@ -2210,6 +2215,9 @@ game.import('extension', function () {
                                 respondShan: true,
                                 respondSha: true,
                                 save: true,
+                                skillTagFilter(player, tag, arg) {
+                                    return game.hasPlayer((Q) => !Q.isLinked());
+                                },
                                 basic: {
                                     useful: 99,
                                     value: 99,
@@ -2554,12 +2562,6 @@ game.import('extension', function () {
                                         },
                                         result: {
                                             player: 1,
-                                        },
-                                        nokeep: true,
-                                        skillTagFilter(player, tag, arg) {
-                                            if (tag === 'nokeep') {
-                                                return player.isPhaseUsing() && !player.getStat().skill.jilue_zhiheng && player.hasCard((card) => card.name !== 'tao', 'h');
-                                            }
                                         },
                                     },
                                 },
@@ -6316,8 +6318,8 @@ game.import('extension', function () {
                             ai: {
                                 order: 2,
                                 respondShan: true,
-                                skillTagFilter(player) {
-                                    if (!player.countCards('hes', { color: 'black' })) return false;
+                                skillTagFilter(player, tag) {
+                                    return Boolean(player.countCards('hes', { color: 'black' }));
                                 },
                                 effect: {
                                     target(card, player, target, current) {
@@ -6588,8 +6590,7 @@ game.import('extension', function () {
                                 }
                             },
                             ai: {
-                                respondSha: true,
-                                respondShan: true,
+                                save: true,
                                 order: 10,
                                 result: {
                                     player(player) {
@@ -7480,6 +7481,17 @@ game.import('extension', function () {
                                 respondShan: true,
                                 respondSha: true,
                                 save: true,
+                                skillTagFilter(player, tag, arg) {
+                                    if (Boolean(_status.currentPhase?.countCards('he'))) {
+                                        if (tag == 'respondShan') {
+                                            return !player.storage.QD_huomo.includes('shan');
+                                        }
+                                        if (tag == 'respondSha') {
+                                            return !player.storage.QD_huomo.includes('sha');
+                                        }
+                                    }
+                                    return false;
+                                },
                                 result: {
                                     player(player) {
                                         if (_status.event.dying) {
@@ -7591,6 +7603,7 @@ game.import('extension', function () {
                                 }
                             },
                             ai: {
+                                save: true,
                                 order: 10,
                                 result: {
                                     player(player, target, card) {
@@ -7859,10 +7872,11 @@ game.import('extension', function () {
                             ai: {
                                 fireAttack: true,
                                 save: true,
-                                respondTao: true,
-                                respondwuxie: true,
                                 respondSha: true,
                                 respondShan: true,
+                                skillTagFilter(player, tag, arg) {
+                                    return Boolean(player.countCards('hes'));
+                                },
                                 order: 10,
                                 result: {
                                     player(player) {
@@ -8203,6 +8217,9 @@ game.import('extension', function () {
                             filter(event, player) {
                                 return player.filterCard('shan');
                             },
+                            hiddenCard(player, name) {
+                                return name == 'shan';
+                            },
                             async content(event, trigger, player) {
                                 const {
                                     result: { targets },
@@ -8218,6 +8235,9 @@ game.import('extension', function () {
                                         }
                                     }
                                 }
+                            },
+                            ai: {
+                                respondShan: true,
                             },
                         },
                         //——————————————————————————————————————————————————————————————————————————————————————————————————沮授 监军谋国 2/3 3护甲
@@ -8679,6 +8699,12 @@ game.import('extension', function () {
                                         },
                                     },
                                     ai: {
+                                        save: true,
+                                        respondSha: true,
+                                        respondShan: true,
+                                        skillTagFilter(player, tag, arg) {
+                                            return Boolean(player.getExpansions('QD_chunliao').length);
+                                        },
                                         order: 20,
                                         result: {
                                             player(player) {
