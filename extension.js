@@ -641,7 +641,7 @@ game.import('extension', function () {
                         return true;
                     }
                     return null;
-                };//事件卡牌是否为虚拟牌或转化牌
+                }; //事件卡牌是否为虚拟牌或转化牌
                 game.center = function () {
                     const list = [];
                     game.countPlayer2(function (current) {
@@ -977,8 +977,7 @@ game.import('extension', function () {
                 if (src.includes('.mp4')) {
                     this.style.backgroundImage = 'none';
                     this.setBackgroundMp4(src);
-                }
-                else {
+                } else {
                     this.style.backgroundImage = `url(${src})`;
                 }
                 return this;
@@ -1347,6 +1346,10 @@ game.import('extension', function () {
                             skills: ['QD_wengua', 'QD_fuzhu'],
                             trashBin: [`ext:缺德扩展/mp4/QD_xushi.mp4`],
                         },
+                        QD_刘备: {
+                            sex: 'male',
+                            skills: ['QD_rende', '激将'],
+                        },
                     },
                     characterIntro: {
                         QD_chunge: '设计者:裸睡天依(2847826324)<br>编写者:潜在水里的火(1476811518)',
@@ -1394,7 +1397,7 @@ game.import('extension', function () {
                             enable: ['chooseToUse', 'chooseToRespond'],
                             usable: 1,
                             hiddenCard(player, name) {
-                                return player.countCards('h') > 0;
+                                return player.countCards('hs');
                             },
                             filter(event, player) {
                                 return game.qcard(player).length && player.countCards('hs');
@@ -1684,7 +1687,7 @@ game.import('extension', function () {
                                     ['heart', 'tao'],
                                     ['diamond', 'sha'],
                                     ['club', 'shan'],
-                                    ['spade', 'wuxie']
+                                    ['spade', 'wuxie'],
                                 ]);
                             },
                             audio: 'chongzhen', //QQQ
@@ -4614,9 +4617,11 @@ game.import('extension', function () {
                                         },
                                         (target) => get.effect(target, { name: 'losehp' }, player, player),
                                         (target) => 1.5 * get.effect(target, { name: 'guohe_copy2' }, player, player),
-                                        (target) => get.effect(target, { name: 'wuzhong' }, player, player)
+                                        (target) => get.effect(target, { name: 'wuzhong' }, player, player),
                                     ];
-                                    const { result: { index } } = await player
+                                    const {
+                                        result: { index },
+                                    } = await player
                                         .chooseControl(controllist)
                                         .set('prompt', get.prompt('落宠'))
                                         .set('choiceList', choiceList)
@@ -5587,7 +5592,10 @@ game.import('extension', function () {
                                                 result2.moved[0].filter((q) => !card2.includes(q)),
                                                 'draw'
                                             ).gaintag = ['QD_dongfeng'];
-                                            player.gain(result2.moved[1].filter((q) => !card1.includes(q)), 'gain2');
+                                            player.gain(
+                                                result2.moved[1].filter((q) => !card1.includes(q)),
+                                                'gain2'
+                                            );
                                         }
                                         const { result } = await player.chooseTarget('大雾', (c, p, t) => !t.hasSkill('QD_dawu'), [1, game.players.length]).set('ai', (t) => t.isFriendsOf(player));
                                         if (result.targets && result.targets[0]) {
@@ -7315,12 +7323,13 @@ game.import('extension', function () {
                                 while (num > 0) {
                                     const {
                                         result: { targets },
-                                    } = await player.chooseTarget(`将任意名角色至多${num}张牌当作<谦逊>牌置于你的武将牌上`, (c, p, t) => t.countCards('he'))
+                                    } = await player
+                                        .chooseTarget(`将任意名角色至多${num}张牌当作<谦逊>牌置于你的武将牌上`, (c, p, t) => t.countCards('he'))
                                         .set('ai', (t) => {
                                             if (numq < 5) {
                                                 return 20 - get.attitude(player, t);
                                             }
-                                            return - get.attitude(player, t);
+                                            return -get.attitude(player, t);
                                         });
                                     if (targets && targets[0]) {
                                         let numx = Math.min(num, targets[0].countCards('he'));
@@ -8237,7 +8246,7 @@ game.import('extension', function () {
                                 }
                             },
                             ai: {
-                                respondShan: true,//不加这个,只靠hiddencard不够,因为杀在你需要响应闪之前就检测你是否有闪,这时候你的filter由于不是响应闪的时机所以不通过,所以导致hiddencard检测没有闪
+                                respondShan: true, //不加这个,只靠hiddencard不够,因为杀在你需要响应闪之前就检测你是否有闪,这时候你的filter由于不是响应闪的时机所以不通过,所以导致hiddencard检测没有闪
                             },
                         },
                         //——————————————————————————————————————————————————————————————————————————————————————————————————沮授 监军谋国 2/3 3护甲
@@ -8522,27 +8531,26 @@ game.import('extension', function () {
                                 }
                                 const {
                                     result: { targets },
-                                } = await player.chooseTarget(`弃置一名角色前${type.length}个区域中的所有牌`)
-                                    .set('ai', (t) => {
-                                        let value = 0;
-                                        let sgn = window.sgn(t.isEnemiesOf(player));
-                                        if (type.length > 1) {
-                                            for (const card of t.getCards('j')) {
-                                                value += get.effect(t, card, player, player) * sgn;
-                                            }
+                                } = await player.chooseTarget(`弃置一名角色前${type.length}个区域中的所有牌`).set('ai', (t) => {
+                                    let value = 0;
+                                    let sgn = window.sgn(t.isEnemiesOf(player));
+                                    if (type.length > 1) {
+                                        for (const card of t.getCards('j')) {
+                                            value += get.effect(t, card, player, player) * sgn;
                                         }
-                                        if (type.length > 2) {
-                                            for (const card of t.getCards('e')) {
-                                                value += get.value(card, t) * sgn;
-                                            }
+                                    }
+                                    if (type.length > 2) {
+                                        for (const card of t.getCards('e')) {
+                                            value += get.value(card, t) * sgn;
                                         }
-                                        if (type.length > 3) {
-                                            for (const card of t.getCards('h')) {
-                                                value += get.value(card, t) * sgn;
-                                            }
+                                    }
+                                    if (type.length > 3) {
+                                        for (const card of t.getCards('h')) {
+                                            value += get.value(card, t) * sgn;
                                         }
-                                        return value;
-                                    });
+                                    }
+                                    return value;
+                                });
                                 if (targets && targets[0]) {
                                     if (type.length) {
                                         targets[0].discard(targets[0].getCards('x'));
@@ -8600,7 +8608,10 @@ game.import('extension', function () {
                                         player.addMark('QD_cunmu_1');
                                         if (player.storage.QD_cunmu_1 > 2) {
                                             player.storage.QD_cunmu_1 = 0;
-                                            const skill = player.GAS().filter((s) => !player.disabledSkills[s]).randomGet();
+                                            const skill = player
+                                                .GAS()
+                                                .filter((s) => !player.disabledSkills[s])
+                                                .randomGet();
                                             if (skill) {
                                                 player.disableSkill('QD_cunmu_1', skill);
                                             }
@@ -8674,8 +8685,8 @@ game.import('extension', function () {
                                                 null,
                                                 true
                                             ); //null是距离限制//true是用牌次数限制
-                                            return number0(num) + 10; //不加这行会出现有button返回undefined导致无法判断直接结束回合                                            
-                                        },//有些高手写的卡牌返回NAN也会导致无法判断,所以用 Number
+                                            return number0(num) + 10; //不加这行会出现有button返回undefined导致无法判断直接结束回合
+                                        }, //有些高手写的卡牌返回NAN也会导致无法判断,所以用 Number
                                         backup(links, player) {
                                             return {
                                                 filterCard: () => false,
@@ -8732,7 +8743,9 @@ game.import('extension', function () {
                                 return event.player.countCards('he') && event.player != player;
                             },
                             async content(event, trigger, player) {
-                                const { result: { links } } = await player.gainPlayerCard('he', trigger.player, true).set('gaintag', ['QD_wengua']);
+                                const {
+                                    result: { links },
+                                } = await player.gainPlayerCard('he', trigger.player, true).set('gaintag', ['QD_wengua']);
                                 const cardx = trigger.player.getCards('h');
                                 if (cardx.length) {
                                     const cardtop = get.cards(cardx.length);
@@ -8740,7 +8753,10 @@ game.import('extension', function () {
                                         result: { moved },
                                     } = await player
                                         .chooseToMove()
-                                        .set('list', [['手牌', cardx], ['牌堆顶', cardtop]])
+                                        .set('list', [
+                                            ['手牌', cardx],
+                                            ['牌堆顶', cardtop],
+                                        ])
                                         .set('prompt', '将其手牌与牌堆顶牌任意交换')
                                         .set('filterMove', function (from, to) {
                                             return typeof to != 'number';
@@ -8790,8 +8806,119 @@ game.import('extension', function () {
                                 }
                             },
                         },
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————刘备
+                        // 仁德
+                        // 出牌阶段,你可以获得其他角色的牌.每当你以此法累计获得两张牌后,你可以视为使用一张基本牌(无距离次数限制)
+                        QD_rende: {
+                            init(player) {
+                                player.storage.QD_rende = 0;
+                            },
+                            audio: 'rerende',
+                            enable: 'phaseUse',
+                            filter(event, player) {
+                                return game.players.some((Q) => Q.countCards('he') && Q != player);
+                            },
+                            filterTarget(card, player, target) {
+                                return player != target && target.countCards('he');
+                            },
+                            selectTarget: 1,
+                            async content(event, trigger, player) {
+                                const { result: { links } } = await player.choosePlayerCard(event.target, 'he', [1, event.target.countCards('he')], 'visible')
+                                    .set('ai', (b) => get.value(b.link));
+                                if (links?.length) {
+                                    await player.gain(links, 'gain2');
+                                    player.storage.QD_rende += links.length;
+                                    while (player.storage.QD_rende > 1) {
+                                        player.storage.QD_rende -= 2;
+                                        const list = game.qcard(player, 'basic', true, false);
+                                        if (list.length) {
+                                            const { result } = await player.chooseButton(['视为使用一张基本牌', [list, 'vcard']])
+                                                .set('ai', function (button) {
+                                                    const player = _status.event.player;
+                                                    const num = player.getUseValue(
+                                                        {
+                                                            name: button.link[2],
+                                                            nature: button.link[3],
+                                                        },
+                                                        null,
+                                                        true
+                                                    ); //null是距离限制//true是用牌次数限制
+                                                    return number0(num) + 10;
+                                                });
+                                            if (result?.links?.length) {
+                                                await player.chooseUseTarget({ name: result.links[0][2], nature: result.links[0][3] }, true, false, 'nodistance');
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            ai: {
+                                fireAttack: true,
+                                order: 20,
+                                result: {
+                                    player(player, target) {
+                                        return target.countCards('he') + 2;
+                                    },
+                                    target(player, target) {
+                                        return -target.countCards('he');
+                                    },
+                                },
+                            },
+                        },
+                        // 激将
+                        // 当你需要砍人时,你可令一名有杀的角色替你使用与打出
+                        激将: {
+                            audio: 'jijiang1',
+                            forced: true,
+                            enable: ['chooseToUse', 'chooseToRespond'],
+                            usable: 5, //QQQ
+                            filter(event, player) {
+                                return game.players.some((Q) => Q.countCards('h', { name: 'sha' }) && Q != player) && player.filterCard('sha', true);
+                            }, //QQQ
+                            hiddenCard(player, name) {
+                                return game.players.some((Q) => Q.countCards('h', { name: 'sha' }) && Q != player) && name == 'sha';
+                            },
+                            async content(event, trigger, player) {
+                                const evt = event.getParent(2);
+                                for (const i of game.players) {
+                                    if (i == player) {
+                                        continue;
+                                    }
+                                    if (i.countCards('h', { name: 'sha' })) {
+                                        const { result } = await i.chooseToRespond(`替${get.translation(player)}打出一张杀`, true, { name: 'sha' });
+                                        if (result.cards && result.cards[0]) {
+                                            if (evt.name == 'chooseToUse') {
+                                                player.when('useCard').then(() => trigger.directHit.addArray(game.players));
+                                                await player.chooseUseTarget('sha', true, false, 'nodistance');
+                                            } else {
+                                                evt.untrigger();
+                                                evt.set('responded', true);
+                                                evt.result = { bool: true, card: { name: 'sha' }, cards: [] };
+                                                evt.redo();
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            ai: {
+                                respondSha: true,
+                                skillTagFilter(player, tag, arg) {
+                                    return game.players.some((Q) => Q.countCards('h', { name: 'sha' }) && Q != player);
+                                },
+                                order: 20,
+                                result: {
+                                    player: 1,
+                                },
+                            },
+                        },
                     },
                     translate: {
+                        //——————————————————————————————————————————————————————————————————————————————————————————————————刘备
+                        QD_刘备: '刘备',
+                        QD_rende: '仁德',
+                        QD_rende_info: '出牌阶段,你可以获得其他角色的牌.每当你以此法累计获得两张牌后,你可以视为使用一张基本牌(无距离次数限制)',
+                        激将: '激将',
+                        激将_info: '当你需要砍人时,你可令一名有杀的角色替你使用与打出',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————徐氏
                         QD_xushi: '徐氏',
                         QD_wengua: '问卦',
@@ -8999,9 +9126,9 @@ game.import('extension', function () {
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————沮授
                         QD_沮授: '沮授',
                         矢北: '矢北',
-                        矢北_info: '每轮你首次受到伤害后回复13点体力,每回合受到的伤害改为x.(x为本回合受伤次数)',
+                        矢北_info: '每轮你首次受到伤害后回复13点体力,每回合受到的伤害改为x(x为本回合受伤次数)',
                         渐营: '渐营',
-                        渐营_info: '记录你每轮使用的第一张牌的点数(不覆盖上次记录),当你使用或打出与记录点数相同的牌时,你摸一张牌或弃置其他角色一张牌',
+                        渐营_info: '记录你每轮使用的第一张牌的点数(不覆盖上次记录),当你使用或打出与记录点数相同的牌时,你摸一张牌',
                         释怀: '释怀',
                         释怀_info: '你获得所有装备过的装备牌对应的技能',
                         //——————————————————————————————————————————————————————————————————————————————————————————————————————兀突骨
