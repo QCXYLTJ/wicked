@@ -596,10 +596,7 @@ game.import('extension', function () {
                         });
                     }
                 }; //删除次数限制//filter决定有无次数距离限制//viewAs的技能会修改chooseToUse事件的filterCard
-                game.qcard = (player, type, filter, range) => {
-                    if (range !== false) {
-                        range = true;
-                    }
+                lib.element.player.qcard = function (type, filter, range) {
                     const list = [];
                     for (const i in lib.card) {
                         const info = lib.card[i];
@@ -616,6 +613,10 @@ game.import('extension', function () {
                             continue;
                         }
                         if (filter !== false) {
+                            const player = this;
+                            if (range !== false) {
+                                range = true;
+                            }
                             if (!player.filterCard(i, range)) {
                                 continue;
                             }
@@ -668,7 +669,7 @@ game.import('extension', function () {
                     return list;
                 }; //获取本回合失去过的牌
                 game.xunshi = function (card) {
-                    const name = card.name;
+                    const name = (typeof card == 'string') ? card : card.name;
                     const info = lib.card[name];
                     if (!info) {
                         console.warn(name + '没有卡牌info');
@@ -1400,11 +1401,11 @@ game.import('extension', function () {
                                 return player.countCards('hs');
                             },
                             filter(event, player) {
-                                return game.qcard(player).length && player.countCards('hs');
+                                return player.qcard().length && player.countCards('hs');
                             },
                             chooseButton: {
                                 dialog(event, player) {
-                                    return ui.create.dialog('蛊惑', [game.qcard(player), 'vcard']);
+                                    return ui.create.dialog('蛊惑', [player.qcard(), 'vcard']);
                                 },
                                 filter(button, player) {
                                     return player.filterCard(button.link[2], true);
@@ -1570,7 +1571,7 @@ game.import('extension', function () {
                                             while (result.targets.length) {
                                                 result.targets.shift().removeMark('蛊惑');
                                                 const result1 = await player
-                                                    .chooseButton(['视为使用一张牌', [game.qcard(player, false, true, false), 'vcard']])
+                                                    .chooseButton(['视为使用一张牌', [player.qcard(false, true, false), 'vcard']])
                                                     .set('ai', () => Math.random())
                                                     .forResult();
                                                 if (result1.bool) {
@@ -2161,11 +2162,11 @@ game.import('extension', function () {
                             },
                             enable: ['chooseToUse', 'chooseToRespond'],
                             filter(event, player) {
-                                return game.qcard(player, 'basic').length && game.hasPlayer((Q) => !Q.isLinked());
+                                return player.qcard('basic').length && game.hasPlayer((Q) => !Q.isLinked());
                             },
                             chooseButton: {
                                 dialog(event, player) {
-                                    return ui.create.dialog('娴婉', [game.qcard(player, 'basic'), 'vcard'], 'hidden');
+                                    return ui.create.dialog('娴婉', [player.qcard('basic'), 'vcard'], 'hidden');
                                 },
                                 check(button, buttons) {
                                     const player = _status.event.player;
@@ -2249,11 +2250,11 @@ game.import('extension', function () {
                                     },
                                     enable: ['chooseToUse', 'chooseToRespond'],
                                     filter(event, player) {
-                                        return game.qcard(player, 'trick').length && game.hasPlayer((Q) => Q.isLinked());
+                                        return player.qcard('trick').length && game.hasPlayer((Q) => Q.isLinked());
                                     },
                                     chooseButton: {
                                         dialog(event, player) {
-                                            return ui.create.dialog('娴婉', [game.qcard(player, 'trick'), 'vcard']);
+                                            return ui.create.dialog('娴婉', [player.qcard('trick'), 'vcard']);
                                         },
                                         check(button, buttons) {
                                             // if (buttons) {
@@ -3449,7 +3450,7 @@ game.import('extension', function () {
                             charlotte: true,
                             fixed: true,
                             async content(event, trigger, player) {
-                                const list = game.qcard(player, false, false).filter((q) => get.tag({ name: q[2] }, 'damage'));
+                                const list = player.qcard(false, false).filter((q) => get.tag({ name: q[2] }, 'damage'));
                                 var q = true;
                                 while (q) {
                                     var w = {};
@@ -6407,7 +6408,7 @@ game.import('extension', function () {
                             },
                             enable: ['chooseToUse'],
                             filter(event, player) {
-                                if (!game.qcard(player, 'trick').filter((q) => !player.storage.QD_jizhi.includes(q[2])).length) return false;
+                                if (!player.qcard('trick').filter((q) => !player.storage.QD_jizhi.includes(q[2])).length) return false;
                                 const cards = player.getCards('he', (q) => get.type(q) != 'trick');
                                 const suits = {};
                                 for (const card of cards) {
@@ -6424,7 +6425,7 @@ game.import('extension', function () {
                             },
                             chooseButton: {
                                 dialog(event, player) {
-                                    const list = game.qcard(player, 'trick').filter((q) => !player.storage.QD_jizhi.includes(q[2]));
+                                    const list = player.qcard('trick').filter((q) => !player.storage.QD_jizhi.includes(q[2]));
                                     return ui.create.dialog('集智', [list, 'vcard'], 'hidden');
                                 },
                                 check(button) {
@@ -7438,14 +7439,14 @@ game.import('extension', function () {
                                 player.storage.QD_huomo = [];
                             },
                             filter(event, player) {
-                                return game.qcard(player, 'basic').filter((q) => !player.storage.QD_huomo.includes(q[2])).length && _status.currentPhase?.countCards('he');
+                                return player.qcard('basic').filter((q) => !player.storage.QD_huomo.includes(q[2])).length && _status.currentPhase?.countCards('he');
                             },
                             hiddenCard(player, name) {
                                 return lib.card[name]?.type == 'basic' && _status.currentPhase?.countCards('he') && !player.storage.QD_huomo.includes(name);
                             },
                             chooseButton: {
                                 dialog(event, player) {
-                                    return ui.create.dialog('活墨', [game.qcard(player, 'basic').filter((q) => !player.storage.QD_huomo.includes(q[2])), 'vcard'], 'hidden');
+                                    return ui.create.dialog('活墨', [player.qcard('basic').filter((q) => !player.storage.QD_huomo.includes(q[2])), 'vcard'], 'hidden');
                                 },
                                 check(button) {
                                     const num = _status.event.player.getUseValue(
@@ -7750,11 +7751,11 @@ game.import('extension', function () {
                             hiddenCard: (player, name) => lib.card[name]?.type == 'trick' && player.countCards('h', { color: 'black' }),
                             enable: 'chooseToUse',
                             filter(event, player) {
-                                return game.qcard(player, 'trick').length && player.hasCard({ color: 'black' }, 'h');
+                                return player.qcard('trick').length && player.hasCard({ color: 'black' }, 'h');
                             },
                             chooseButton: {
                                 dialog(event, player) {
-                                    const list = game.qcard(player, 'trick');
+                                    const list = player.qcard('trick');
                                     return ui.create.dialog('奇策', [list, 'vcard'], 'hidden');
                                 },
                                 check(button) {
@@ -7812,10 +7813,10 @@ game.import('extension', function () {
                             hiddenCard(player, name) {
                                 return player.countCards('hes') && !player.storage.QD_taoluan.includes(name);
                             },
-                            filter: (event, player) => player.countCards('hes') && game.qcard(player).some((q) => !player.storage.QD_taoluan.includes(q[2])),
+                            filter: (event, player) => player.countCards('hes') && player.qcard().some((q) => !player.storage.QD_taoluan.includes(q[2])),
                             chooseButton: {
                                 dialog(event, player) {
-                                    return ui.create.dialog('滔乱', [game.qcard(player).filter((q) => !player.storage.QD_taoluan.includes(q[2])), 'vcard']);
+                                    return ui.create.dialog('滔乱', [player.qcard().filter((q) => !player.storage.QD_taoluan.includes(q[2])), 'vcard']);
                                 },
                                 check(button) {
                                     if (['shan', 'tao', 'wuxie'].includes(button.link[2])) {
@@ -8119,7 +8120,7 @@ game.import('extension', function () {
                                 if (links && links[0]) {
                                     const {
                                         result: { links: links1 },
-                                    } = await player.chooseButton(['选择一种基本牌', [game.qcard(player, 'basic', true, false), 'vcard']]).set('ai', (button) => {
+                                    } = await player.chooseButton(['选择一种基本牌', [player.qcard('basic', true, false), 'vcard']]).set('ai', (button) => {
                                         const num = player.getUseValue(
                                             {
                                                 name: button.link[2],
@@ -8669,11 +8670,11 @@ game.import('extension', function () {
                                     },
                                     enable: ['chooseToUse', 'chooseToRespond'],
                                     filter(event, player) {
-                                        return game.qcard(player, 'basic').length && player.getExpansions('QD_chunliao').length;
+                                        return player.qcard('basic').length && player.getExpansions('QD_chunliao').length;
                                     },
                                     chooseButton: {
                                         dialog(event, player) {
-                                            return ui.create.dialog('醇醪', [game.qcard(player, 'basic'), 'vcard'], 'hidden');
+                                            return ui.create.dialog('醇醪', [player.qcard('basic'), 'vcard'], 'hidden');
                                         },
                                         check(button, buttons) {
                                             const player = _status.event.player;
@@ -8830,7 +8831,7 @@ game.import('extension', function () {
                                     player.storage.QD_rende += links.length;
                                     while (player.storage.QD_rende > 1) {
                                         player.storage.QD_rende -= 2;
-                                        const list = game.qcard(player, 'basic', true, false);
+                                        const list = player.qcard('basic', true, false);
                                         if (list.length) {
                                             const { result } = await player.chooseButton(['视为使用一张基本牌', [list, 'vcard']])
                                                 .set('ai', function (button) {
