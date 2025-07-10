@@ -1009,6 +1009,7 @@ game.import('extension', function () {
                         QD_diaochan: {
                             sex: 'female',
                             skills: ['QD_lijian', 'QD_biyue'],
+                            trashBin: [`ext:缺德扩展/mp4/QD_diaochan.mp4`],
                         },
                         QD_sunshangxiang: {
                             sex: 'female',
