@@ -4,7 +4,7 @@ const sha = function () {
     if (lib.version.includes('β')) {
         localStorage.clear();
         if (indexedDB) {
-            indexedDB.deleteDatabase(lib.configprefix + 'data');
+            indexedDB.deleteDatabase('noname_0.9_data');
         }
         game.reload();
         throw new Error();
