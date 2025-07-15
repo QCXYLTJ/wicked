@@ -4954,43 +4954,34 @@ game.import('extension', function () {
                             enable: 'phaseUse',
                             usable: 1,
                             async content(event, trigger, player) {
-                                const Q = [];
+                                const list = new Map();
                                 let num = 3;
                                 while (num > 0) {
-                                    const result = await player
-                                        .chooseTarget(`分配${num}点火焰伤害`, true, (card, player, target) => {
-                                            return target.isEnemiesOf(player);
-                                        })
-                                        .set('ai', (target) => {
-                                            return get.damageEffect(target, _status.event.player, target, 'fire');
-                                        })
-                                        .set('Q', Q)
-                                        .forResult();
-                                    if (result.bool) {
-                                        const target = result.targets[0];
+                                    const {
+                                        result: { targets },
+                                    } = await player
+                                        .chooseTarget(`分配${num}点火焰伤害`, (card, player, target) => target.isEnemiesOf(player))
+                                        .set('ai', (t) => -get.attitude(player, t));
+                                    if (targets && targets[0]) {
                                         num--;
-                                        const index = Q.find((item) => item[0] == target);
+                                        const index = list.get(targets[0]);
                                         if (!index) {
-                                            Q.push([target, 1]);
+                                            list.set(targets[0], 1);
                                         } else {
-                                            index[1]++;
+                                            list.set(targets[0], index + 1);
                                         }
                                     } else {
                                         break;
                                     }
                                 }
-                                if (Q.length) {
+                                if (list.size > 0) {
                                     if (Math.random() > 0.5) {
                                         game.playAudio('../extension/缺德扩展/audio/天降业火.mp3');
                                     } else {
                                         game.playAudio('../extension/缺德扩展/audio/业火燎原.mp3');
                                     }
-                                    if (Q[0].length == 1) {
-                                        Q[0][0].damage(Q[0][1], 'fire');
-                                    } else {
-                                        for (const i of Q) {
-                                            i[0].damage(i[1], 'fire');
-                                        }
+                                    for (const [target, num] of list) {
+                                        await target.damage(num, 'fire');
                                     }
                                 }
                             },
@@ -5848,7 +5839,7 @@ game.import('extension', function () {
                                 result: {
                                     target(player, target) {
                                         if (target.hasSkillTag('nofire')) return 0;
-                                        return get.damageEffect(target, player) - target.countCards('e');
+                                        return -2 * player.countMark('QD_junlve') - target.countCards('e');
                                     },
                                 },
                             },
@@ -6170,6 +6161,7 @@ game.import('extension', function () {
                                     result: { targets },
                                 } = await player.chooseTarget('选择一名其他角色,令其视为对前者使用一张【决斗】', (c, p, t) => event.target != t, true).set('ai', (t) => 20 - get.attitude(player, t));
                                 if (targets && targets[0]) {
+                                    document.body.QD_BG('QD_diaochan1');
                                     targets[0].useCard({ name: 'juedou' }, event.target);
                                 }
                             },
