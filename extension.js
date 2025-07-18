@@ -997,27 +997,42 @@ game.import('extension', function () {
                     });
                     return video;
                 }; //给父元素添加一个覆盖的背景mp4
-                game.src = function (name) {
-                    let extimage = null,
-                        nameinfo = get.character(name),
-                        imgPrefixUrl;
-                    if (nameinfo && nameinfo.trashBin) {
-                        for (const value of nameinfo.trashBin) {
+                game.charactersrc = function (name) {
+                    const info = lib.character[name];
+                    if (info && info.trashBin) {
+                        for (const value of info.trashBin) {
                             if (value.startsWith('img:')) {
-                                imgPrefixUrl = value.slice(4);
-                                break;
-                            } else if (value.startsWith('ext:')) {
-                                extimage = value;
-                                break;
-                            } else if (value.startsWith('character:')) {
+                                return value.slice(4);
+                            }
+                            if (value.startsWith('ext:')) {
+                                return value.replace(/^ext:/, 'extension/');
+                            }
+                            if (value.startsWith('character:')) {
                                 name = value.slice(10);
                                 break;
                             }
                         }
                     }
-                    if (imgPrefixUrl) return imgPrefixUrl;
-                    else if (extimage) return extimage.replace(/^ext:/, 'extension/');
                     return `image/character/${name}.jpg`;
+                }; //获取武将名对应立绘路径
+                game.cardsrc = function (name) {
+                    const info = lib.card[name];
+                    if (info) {
+                        if (info.image) {
+                            if (info.image.startsWith('ext:')) {
+                                return info.image.replace(/^ext:/, 'extension/');
+                            }
+                            return info.image;
+                        }
+                        const ext = info.fullskin ? 'png' : 'jpg';
+                        if (info.modeimage) {
+                            return `image/mode/${info.modeimage}/card/${name}.${ext}`;
+                        }
+                        if (info.cardimage) {
+                            name = info.cardimage;
+                        }
+                        return `image/card/${name}.${ext}`;
+                    }
                 }; //获取武将名对应立绘路径
                 HTMLElement.prototype.QD_BG = function (name) {
                     const src = `extension/缺德扩展/mp4/${name}.mp4`;
