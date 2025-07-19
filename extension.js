@@ -2655,7 +2655,7 @@ game.import('extension', function () {
                             },
                             async content(event, trigger, player) {
                                 player.storage.QD_kuroux--;
-                                player.phase();
+                                player.phase().set('skill', 'nodelay');
                             },
                             group: ['QD_kuroux_1'],
                             subSkill: {
@@ -8014,7 +8014,7 @@ game.import('extension', function () {
                                 );
                             },
                             async content(event, trigger, player) {
-                                player.phase();
+                                player.phase().set('skill', 'nodelay');
                             },
                         },
                         //攻心
