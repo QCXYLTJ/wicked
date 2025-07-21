@@ -907,19 +907,15 @@ game.import('extension', function () {
                 }; //濒死结算
                 lib.element.player.yinni = function () {
                     const player = this;
-                    const name = player.name;
                     player.storage.rawHp = player.hp;
                     player.storage.rawMaxHp = player.maxHp;
-                    if (name && lib.character[name]) {
-                        const skill = lib.character[name][3];
+                    if (player.skills.length) {
                         if (!player.hiddenSkills) {
                             player.hiddenSkills = [];
                         }
-                        if (skill[0]) {
-                            for (const i of skill) {
-                                player.removeSkill(i);
-                            }
-                            player.hiddenSkills.addArray(skill);
+                        for (const i of player.skills.slice()) {
+                            player.removeSkill(i);
+                            player.hiddenSkills.add(i);
                         }
                     }
                     player.classList.add('unseen');
@@ -1080,16 +1076,20 @@ game.import('extension', function () {
                     }
                     str += '伤害';
                     game.log(player, str);
-                    if (player.stat[player.stat.length - 1].damaged == undefined) {
-                        player.stat[player.stat.length - 1].damaged = num;
+                    const stat = player.stat;
+                    const statx = stat[stat.length - 1];
+                    if (!statx.damage) {
+                        statx.damaged = num;
                     } else {
-                        player.stat[player.stat.length - 1].damaged += num;
+                        statx.damaged += num;
                     }
                     if (source) {
-                        if (source.stat[source.stat.length - 1].damage == undefined) {
-                            source.stat[source.stat.length - 1].damage = num;
+                        const stat = source.stat;
+                        const statx = stat[stat.length - 1];
+                        if (!statx.damage) {
+                            statx.damage = num;
                         } else {
-                            source.stat[source.stat.length - 1].damage += num;
+                            statx.damage += num;
                         }
                     }
                     player.hp -= num;
@@ -1133,7 +1133,7 @@ game.import('extension', function () {
                         player.node.equips.appendChild(card);
                         card.style.transform = '';
                         card.node.name2.innerHTML = `${get.translation(card.suit)}${card.number} ${get.translation(card.name)}`;
-                        const info = lib.card[card];
+                        const info = lib.card[card.name];
                         if (info && info.skills) {
                             for (const i of info.skills) {
                                 player.addSkillTrigger(i);
@@ -3854,77 +3854,59 @@ game.import('extension', function () {
                             async content(event, trigger, player) {
                                 await player.loseHp();
                                 trigger.parent.excluded.add(player);
-                                const Q = [];
+                                const list = new Map();
                                 let num = player.getDamagedHp();
                                 while (num > 0) {
-                                    const result = await player
-                                        .chooseTarget(`获得任意名角色区域内的至多${num}张牌`, (card, player, target) => {
-                                            return (
-                                                target != player &&
-                                                target.hasCard((T) => {
-                                                    const G = _status.event.Q.find((item) => item[0] == target);
-                                                    if (G && G[1].includes(T)) {
-                                                        return false;
-                                                    }
-                                                    return lib.filter.canBeGained(T, player, target);
-                                                }, 'hej')
-                                            );
+                                    const {
+                                        result: { targets },
+                                    } = await player
+                                        .chooseTarget(`获得任意名角色区域内的${num}张牌`, (card, player, target) => {
+                                            return target != player && target.hasCard((c) => {
+                                                const discarded = list.get(target);
+                                                if (discarded?.includes(c)) return false;
+                                                return lib.filter.canBeGained(c, player, target, 'dcluochong');
+                                            }, 'hej');
                                         })
                                         .set('ai', (target) => {
-                                            const player = _status.event.player,
-                                                G = _status.event.Q.find((item) => item[0] == target);
-                                            if (G && G[1].length >= target.countCards('he')) {
-                                                return 0;
-                                            }
+                                            const discarded = list.get(target);
+                                            if (discarded?.length >= target.countCards('he')) return 0;
                                             return get.effect(target, { name: 'shunshou' }, player, player);
-                                        })
-                                        .set('Q', Q)
-                                        .forResult();
-                                    if (result.bool) {
-                                        const target = result.targets[0];
-                                        const cards = await player
-                                            .choosePlayerCard(target, true, 'hej', [1, num], `选择获得${get.translation(target)}区域内的牌`)
+                                        });
+                                    if (targets?.length) {
+                                        const {
+                                            result: { cards },
+                                        } = await player
+                                            .choosePlayerCard(targets[0], true, 'hej', [1, num], `选择获得${get.translation(targets[0])}区域内的牌`)
                                             .set('filterButton', (button) => {
-                                                const card = button.link,
-                                                    target = _status.event.target,
-                                                    player = get.player();
-                                                const G = _status.event.Q.find((item) => item[0] == target);
-                                                if (G && G[1].includes(card)) {
-                                                    return false;
-                                                }
-                                                return lib.filter.canBeGained(card, player, target);
+                                                const discarded = list.get(targets[0]);
+                                                if (discarded?.includes(button.link)) return false;
+                                                return lib.filter.canBeGained(button.link, player, targets[0], 'dcluochong');
                                             })
-                                            .set('Q', Q)
                                             .set('ai', (button) => {
-                                                if (ui.selected.buttons.length) {
+                                                if (ui.selected.buttons.length > 0) {
                                                     return false;
-                                                }
-                                                var val = get.buttonValue(button, _status.event.target);
-                                                if (get.attitude(_status.event.player, _status.event.target) > 0) {
-                                                    return -val;
-                                                }
-                                                return val;
-                                            })
-                                            .forResultCards();
-                                        num -= cards.length;
-                                        const index = Q.find((item) => item[0] == target);
-                                        if (!index) {
-                                            Q.push([target, cards]);
-                                        } else {
-                                            index[1].addArray(cards);
+                                                }//一次进行一张牌的ai计算
+                                                return get.value(button.link, targets[0]) * -get.attitude(player, targets[0]);
+                                            });
+                                        if (cards?.length) {
+                                            num -= cards.length;
+                                            const discarded = list.get(targets[0]);
+                                            if (!discarded) {
+                                                list.set(targets[0], cards);
+                                            } else {
+                                                discarded.addArray(cards);
+                                            }
                                         }
                                     } else {
                                         break;
                                     }
                                 }
-                                player.draw(num);
-                                if (Q.length) {
-                                    if (Q[0].length == 1) {
-                                        player.gain(Q[0][1], 'gain2');
-                                    } else {
-                                        for (const i of Q) {
-                                            player.gain(i[1], 'gain2');
-                                        }
+                                if (num > 0) {
+                                    await player.draw(num);
+                                }
+                                if (list.size) {
+                                    for (const [target, cards] of list) {
+                                        await target.give(cards, player);
                                     }
                                 }
                             },
@@ -6250,79 +6232,59 @@ game.import('extension', function () {
                                 return true;
                             },
                             async content(event, trigger, player) {
-                                var num = 2 * trigger.cards.length;
-                                const Q = [];
+                                const list = new Map();
+                                let num = 2 * trigger.cards.length;
                                 while (num > 0) {
-                                    const result = await player
-                                        .chooseTarget(`获得任意名角色区域内的至多${num}张牌`, (card, player, target) => {
-                                            return (
-                                                target != player &&
-                                                target.hasCard((T) => {
-                                                    const G = _status.event.Q.find((item) => item[0] == target);
-                                                    if (G && G[1].includes(T)) {
-                                                        return false;
-                                                    }
-                                                    return lib.filter.canBeGained(T, player, target);
-                                                }, 'hej')
-                                            );
+                                    const {
+                                        result: { targets },
+                                    } = await player
+                                        .chooseTarget(`获得任意名角色区域内的${num}张牌`, (card, player, target) => {
+                                            return target != player && target.hasCard((c) => {
+                                                const discarded = list.get(target);
+                                                if (discarded?.includes(c)) return false;
+                                                return lib.filter.canBeGained(c, player, target, 'dcluochong');
+                                            }, 'hej');
                                         })
                                         .set('ai', (target) => {
-                                            const player = _status.event.player,
-                                                G = _status.event.Q.find((item) => item[0] == target);
-                                            if (G && G[1].length >= target.countCards('he')) {
-                                                return 0;
-                                            }
+                                            const discarded = list.get(target);
+                                            if (discarded?.length >= target.countCards('he')) return 0;
                                             return get.effect(target, { name: 'shunshou' }, player, player);
-                                        })
-                                        .set('Q', Q)
-                                        .forResult();
-                                    if (result.bool) {
-                                        const target = result.targets[0];
-                                        const cards = await player
-                                            .choosePlayerCard(target, true, 'hej', [1, num], `选择获得${get.translation(target)}区域内的牌`)
+                                        });
+                                    if (targets?.length) {
+                                        const {
+                                            result: { cards },
+                                        } = await player
+                                            .choosePlayerCard(targets[0], true, 'hej', [1, num], `选择获得${get.translation(targets[0])}区域内的牌`)
                                             .set('filterButton', (button) => {
-                                                const card = button.link,
-                                                    target = _status.event.target,
-                                                    player = get.player();
-                                                const G = _status.event.Q.find((item) => item[0] == target);
-                                                if (G && G[1].includes(card)) {
-                                                    return false;
-                                                }
-                                                return lib.filter.canBeGained(card, player, target);
+                                                const discarded = list.get(targets[0]);
+                                                if (discarded?.includes(button.link)) return false;
+                                                return lib.filter.canBeGained(button.link, player, targets[0], 'dcluochong');
                                             })
-                                            .set('Q', Q)
                                             .set('ai', (button) => {
-                                                if (ui.selected.buttons.length) {
+                                                if (ui.selected.buttons.length > 0) {
                                                     return false;
-                                                }
-                                                var val = get.buttonValue(button, _status.event.target);
-                                                if (get.attitude(_status.event.player, _status.event.target) > 0) {
-                                                    return -val;
-                                                }
-                                                return val;
-                                            })
-                                            .forResultCards();
-                                        num -= cards.length;
-                                        const index = Q.find((item) => item[0] == target);
-                                        if (!index) {
-                                            Q.push([target, cards]);
-                                        } else {
-                                            index[1].addArray(cards);
+                                                }//一次进行一张牌的ai计算
+                                                return get.value(button.link, targets[0]) * -get.attitude(player, targets[0]);
+                                            });
+                                        if (cards?.length) {
+                                            num -= cards.length;
+                                            const discarded = list.get(targets[0]);
+                                            if (!discarded) {
+                                                list.set(targets[0], cards);
+                                            } else {
+                                                discarded.addArray(cards);
+                                            }
                                         }
                                     } else {
                                         break;
                                     }
                                 }
                                 if (num > 0) {
-                                    player.draw(num);
+                                    await player.draw(num);
                                 }
-                                if (Q.length) {
-                                    if (Q[0].length == 1) {
-                                        player.gain(Q[0][1], 'gain2');
-                                    } else {
-                                        for (const i of Q) {
-                                            player.gain(i[1], 'gain2');
-                                        }
+                                if (list.size) {
+                                    for (const [target, cards] of list) {
+                                        await target.give(cards, player);
                                     }
                                 }
                             },
