@@ -1078,7 +1078,7 @@ game.import('extension', function () {
                     game.log(player, str);
                     const stat = player.stat;
                     const statx = stat[stat.length - 1];
-                    if (!statx.damage) {
+                    if (!statx.damaged) {
                         statx.damaged = num;
                     } else {
                         statx.damaged += num;
@@ -1652,9 +1652,6 @@ game.import('extension', function () {
                                 dialog(event, player) {
                                     return ui.create.dialog('蛊惑', [player.qcard(), 'vcard']);
                                 },
-                                filter(button, player) {
-                                    return player.filterCard(button.link[2], true);
-                                },
                                 check(button) {
                                     const player = _status.event.player;
                                     const num = player.getUseValue(
@@ -2142,44 +2139,8 @@ game.import('extension', function () {
                             },
                         },
                         化木: {
-                            trigger: {
-                                player: ['useCardAfter', 'respondAfter'],
-                            },
-                            forced: true,
                             init(player) {
                                 player.disableEquip('equip1');
-                            },
-                            filter(event, player) {
-                                var color = get.color(event.card);
-                                if (color == 'none') {
-                                    return false;
-                                }
-                                if (get.type(event.card) == 'equip') {
-                                    return false;
-                                }
-                                return event.cards && event.cards[0];
-                            },
-                            prompt2: (event) => '将' + get.translation(event.cards) + '置于武将牌上',
-                            async content(event, trigger, player) {
-                                player.addToExpansion(trigger.cards, 'gain2').gaintag.add('化木');
-                            },
-                            ai: {
-                                reverseOrder: true,
-                                combo: '前盟',
-                            },
-                            mod: {
-                                aiOrder(player, card, num) {
-                                    if (typeof card == 'object') {
-                                        var history = game.getGlobalHistory('useCard');
-                                        if (!history.length) {
-                                            return;
-                                        }
-                                        var evt = history[history.length - 1];
-                                        if (evt && evt.card && get.color(evt.card) != 'none' && get.color(card) != 'none' && get.color(evt.card) != get.color(card)) {
-                                            return num + 4;
-                                        }
-                                    }
-                                },
                             },
                             marktext: '木',
                             intro: {
@@ -2213,6 +2174,27 @@ game.import('extension', function () {
                                     }
                                 },
                             },
+                            trigger: {
+                                player: ['useCardAfter', 'respondAfter'],
+                            },
+                            filter(event, player) {
+                                var color = get.color(event.card);
+                                if (color == 'none') {
+                                    return false;
+                                }
+                                if (get.type(event.card) == 'equip') {
+                                    return false;
+                                }
+                                return event.cards && event.cards[0];
+                            },
+                            forced: true,
+                            async content(event, trigger, player) {
+                                player.addToExpansion(trigger.cards, 'gain2').gaintag.add('化木');
+                            },
+                            ai: {
+                                reverseOrder: true,
+                                combo: '前盟',
+                            },
                         },
                         良缘: {
                             enable: 'chooseToUse',
@@ -2225,29 +2207,20 @@ game.import('extension', function () {
                                 return false;
                             },
                             filter(event, player) {
-                                if (event.type == 'wuxie') {
-                                    return false;
-                                }
-                                if (player.filterCard('tao') && player.getExpansions('化木').filter((i) => get.color(i) == 'red').length) {
-                                    return true;
-                                }
-                                if (player.filterCard('jiu') && player.getExpansions('化木').filter((i) => get.color(i) == 'black').length) {
-                                    return true;
-                                }
-                                return false;
+                                const map = { jiu: 'black', tao: 'red' };
+                                return ['jiu', 'tao'].some(type =>
+                                    player.filterCard(type) &&
+                                    player.getExpansions('化木').some(i => get.color(i) === map[type])
+                                );
                             },
                             chooseButton: {
-                                dialog() {
-                                    return ui.create.dialog('良缘', [['tao', 'jiu'], 'vcard'], 'hidden');
-                                },
-                                filter(button, player) {
-                                    var name = button.link[2],
-                                        color = name == 'tao' ? 'red' : 'black';
-                                    var cards = player.getExpansions('化木').filter((i) => get.color(i, false) == color);
-                                    if (!cards.length) {
-                                        return false;
-                                    }
-                                    return player.filterCard(name);
+                                dialog(event, player) {
+                                    const map = { jiu: 'black', tao: 'red' };
+                                    const list = ['jiu', 'tao'].filter(type =>
+                                        player.filterCard(type) &&
+                                        player.getExpansions('化木').some(i => get.color(i) === map[type])
+                                    );
+                                    return ui.create.dialog('良缘', [list, 'vcard'], 'hidden');
                                 },
                                 check(button) {
                                     const player = _status.event.player;
@@ -2829,7 +2802,7 @@ game.import('extension', function () {
                             },
                             async content(event, trigger, player) {
                                 player.storage.QD_kuroux--;
-                                player.phase().set('skill', 'nodelay');
+                                player.phase('nodelay');
                             },
                             group: ['QD_kuroux_1'],
                             subSkill: {
@@ -8150,7 +8123,7 @@ game.import('extension', function () {
                                 );
                             },
                             async content(event, trigger, player) {
-                                player.phase().set('skill', 'nodelay');
+                                player.phase('nodelay');
                             },
                         },
                         //攻心
