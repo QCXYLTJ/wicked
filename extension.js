@@ -1125,11 +1125,20 @@ game.import('extension', function () {
                         }
                     }
                     else if (card) {
-                        const vcard = new lib.element.VCard(card);
-                        const cardSymbol = Symbol('card');
-                        card.cardSymbol = cardSymbol;
-                        card[cardSymbol] = vcard;
-                        player.vcardsMap?.equips.push(vcard);
+                        if (card[card.cardSymbol]) {
+                            const owner = get.owner(card);
+                            const vcard = card[card.cardSymbol];
+                            if (owner) {
+                                owner.vcardsMap?.equips.remove(vcard);
+                            }
+                            player.vcardsMap?.equips.add(vcard);
+                        } else {
+                            const vcard = new lib.element.VCard(card);
+                            const cardSymbol = Symbol('card');
+                            card.cardSymbol = cardSymbol;
+                            card[cardSymbol] = vcard;
+                            player.vcardsMap?.equips.push(vcard);
+                        }
                         player.node.equips.appendChild(card);
                         card.style.transform = '';
                         card.node.name2.innerHTML = `${get.translation(card.suit)}${card.number} ${get.translation(card.name)}`;
@@ -6763,11 +6772,8 @@ game.import('extension', function () {
                                 });
                                 if (links && links[0]) {
                                     const name = get.color(links[0]) == 'red' ? 'tao' : 'jiu';
-                                    if (evt.parent.name == '_save') {
-                                        await player.useCard({ name: name }, links, _status.dying, false);
-                                    } else {
-                                        await player.chooseUseTarget({ name: name }, links, true);
-                                    }
+                                    const target = evt.parent.name == '_save' ? _status.dying : player;
+                                    await player.useCard({ name: name }, links, target, false);
                                 }
                             },
                             ai: {
