@@ -518,6 +518,10 @@ game.import('extension', function () {
             }; //阶段限一次技能计数清空
             //—————————————————————————————————————————————————————————————————————————————技能相关自创函数
             const jineng = function () {
+                lib.element.player.qhasSkill = function (s) {
+                    const player = this;
+                    return player.GS().includes(s);
+                };//武将是否拥有某技能
                 lib.element.player.GS = function () {
                     const player = this;
                     const skills = player.skills.slice();
@@ -698,23 +702,43 @@ game.import('extension', function () {
                     return Math.max(Number(num), 1);
                 }; //始终返回正数且至少为1
                 window.deepClone = function (obj) {
-                    const clone = {};
-                    for (const key in obj) {
-                        if (obj.hasOwnProperty(key)) {
-                            const info = obj[key];
-                            if (typeof info == 'object') {
-                                if (Array.isArray(info)) {
-                                    clone[key] = info.slice();
-                                } else {
-                                    clone[key] = window.deepClone(info);
-                                }
-                            } else {
-                                clone[key] = info;
+                    if (obj === null || typeof obj !== 'object') {
+                        return obj;
+                    }
+                    if (Array.isArray(obj)) {
+                        return obj.map(item => deepClone(item));
+                    } else {
+                        const clonedObj = {};
+                        for (let key in obj) {
+                            if (obj.hasOwnProperty(key)) {
+                                clonedObj[key] = deepClone(obj[key]);
                             }
                         }
+                        return clonedObj;
                     }
-                    return clone;
                 }; //深拷贝对象
+                window.factorial = function (num) {
+                    num = Math.round(num);
+                    if (num < 0) {
+                        return 0;
+                    }
+                    if (num < 2) {
+                        return 1;
+                    }
+                    let result = 1;
+                    for (let i = 2; i <= num; i++) {
+                        result *= i;
+                    }
+                    return result;
+                }; //阶乘
+                window.isPrime = function (num) {
+                    if (num === 2 || num === 3) return true;
+                    if (num < 2 || num % 2 === 0 || num % 3 === 0) return false;
+                    for (let i = 5; i * i <= num; i += 6) {
+                        if (num % i === 0 || num % (i + 2) === 0) return false;
+                    }
+                    return true;
+                }; // 质数
             };
             numfunc();
             //—————————————————————————————————————————————————————————————————————————————视为转化虚拟牌相关自创函数
@@ -814,7 +838,7 @@ game.import('extension', function () {
             //—————————————————————————————————————————————————————————————————————————————获取卡牌历史相关自创函数
             const cardfunc = function () {
                 game.isxuni = function (event) {
-                    if (!event.cards) {
+                    if (!event.cards || !event.card) {
                         return false;
                     }
                     if (event.cards.length == 1 && event.cards[0].name == event.card.name) {
@@ -1045,11 +1069,9 @@ game.import('extension', function () {
                     if (player.parentNode != ui.arena) {
                         ui.arena.appendChild(player);
                     } //防止被移除节点
-                    player.classList.remove('removing');
-                    player.classList.remove('hidden');
-                    player.classList.remove('dead');
+                    player.classList.remove('removing', 'hidden', 'dead');
                     game.log(player, '复活');
-                    if (player.maxHp < 1) player.maxHp = 1;
+                    player.maxHp = Math.max(lib.character[player.name]?.maxHp || 0, player.maxHp || 0);
                     player.hp = player.maxHp;
                     game.addVideo('revive', player);
                     player.removeAttribute('style');
@@ -1123,8 +1145,7 @@ game.import('extension', function () {
                         for (const i of card) {
                             player.qequip(i);
                         }
-                    }
-                    else if (card) {
+                    } else if (card) {
                         if (card[card.cardSymbol]) {
                             const owner = get.owner(card);
                             const vcard = card[card.cardSymbol];
@@ -1151,6 +1172,29 @@ game.import('extension', function () {
                     }
                     return player;
                 };
+                lib.element.player.qdie = async function (source) {
+                    const player = this;
+                    await player.qdie1();
+                    await player.qdie2();
+                    return player;
+                };//可以触发死亡相关时机,但是死亡无法避免
+                lib.element.player.qdie1 = async function (source) {
+                    const player = this;
+                    const next = game.createEvent('die');
+                    next.source = source;
+                    next.player = player;
+                    await next.setContent(function () { });
+                    return player;
+                };//触发死亡相关时机
+                lib.element.player.qdie2 = async function (source) {
+                    const player = this;
+                    const next = game.createEvent('diex', false);
+                    next.source = source;
+                    next.player = player;
+                    next._triggered = null;
+                    await next.setContent(lib.element.content.die);
+                    return player;
+                };//斩杀
             }; //解构魔改本体函数
             mogai();
             //—————————————————————————————————————————————————————————————————————————————播放视频与背景图片相关函数
@@ -5889,6 +5933,9 @@ game.import('extension', function () {
                                     const stat = trigger.player.stat;
                                     const statskill = stat[stat.length - 1].skill;
                                     statskill[name] = numberq0(statskill[name]) + 1;
+                                    if (info.sourceSkill) {
+                                        statskill[info.sourceSkill] = numberq0(statskill[info.sourceSkill]) + 1;
+                                    }
                                     trigger.cancel();
                                 } //被终止的主动技不会计入次数,要手动加一下
                                 game.log(player, `终止${get.translation(name)}的发动`);
