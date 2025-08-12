@@ -101,17 +101,35 @@ body>#divQ>.characterQ {
 	position: relative;
 }
 
-/* 技能列表 */
+/* 输入框 */
+body>.shuruQ {
+	height: 5%;
+	width: 30%;
+	z-index: 9999;
+	position: absolute;
+	top: 5%;
+	right: 40%;
+}
+
+/* 基础div */
 body>#skilllist {
+	display: flex;
+	flex-direction: column;
+	grid-template-columns: repeat(8, 1fr);
+	gap: 10px;
+	padding: 20px;
 	z-index: 99;
 	right: 10%;
 	left: 10%;
 	top: 10%;
 	bottom: 10%;
 	overflow-y: auto;
+	background-image: url(./image/beijing.jpg);
+	background-size: cover;
+	background-position: center;
 }
 
-/* 技能及翻译按钮 */
+/* 技能及翻译 */
 body>#skilllist>.skillQ {
 	position: relative;
 	width: 90%;
@@ -121,29 +139,6 @@ body>#skilllist>.skillQ {
 	z-index: 999;
 	font-size: 25px;
 	color: rgb(35, 21, 221);
-}
-
-/* 技能及翻译按钮 */
-body>.introQ {
-	position: relative;
-	width: 60%;
-	height: 5%;
-	top: 5%;
-	left: 20%;
-	right: 20%;
-	z-index: 999;
-	font-size: 25px;
-	color: rgb(35, 21, 221);
-}
-
-/* 输入框 */
-body>.shuruQ {
-	height: 5%;
-	width: 30%;
-	z-index: 9999;
-	position: absolute;
-	top: 5%;
-	right: 40%;
 }
 
 /* 返回按钮 */
@@ -198,6 +193,19 @@ body>.findQ {
 	background-image: url(./image/hallicon2.png);
 	background-size: cover;
 	background-position: center;
+}
+
+/* 菜单右键描述 */
+body>.introQ {
+	position: relative;
+	width: 60%;
+	height: 5%;
+	top: 5%;
+	left: 20%;
+	right: 20%;
+	z-index: 999;
+	font-size: 25px;
+	color: rgb(35, 21, 221);
 }
 
 /* 温柔一刀菜单按钮 */
