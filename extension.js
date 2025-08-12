@@ -9752,7 +9752,6 @@ game.import('extension', function () {
                         QD_xiaoji_info: '任意角色失去装备牌后,你摸两张牌',
                     },
                 };
-                window.ceshiskill = Object.keys(QQQ.skill);
                 for (const i in QQQ.character) {
                     const info = QQQ.character[i];
                     if (!info.hp) {
